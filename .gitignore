@@ -1,0 +1,97 @@
+# ============================================================
+# .gitignore - These MRgRT segmentation
+# Ce fichier dit a Git ce qu'il NE doit PAS versionner.
+# ============================================================
+
+# --- Donnees medicales (lourdes, hors-source) ---
+# JAMAIS pousser de donnees patients sur GitHub, meme privees !
+# Le / au debut limite au dossier racine pour ne PAS bloquer src/data/ qui est du CODE
+/data/
+/raw_totalseg/
+/data_ct/
+*.nii
+*.nii.gz
+*.dcm
+*.dicom
+
+# --- Environnement Python ---
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# --- Notebooks Jupyter ---
+.ipynb_checkpoints/
+*.ipynb-checkpoint
+# Garder les notebooks au format propre (pas les sorties)
+# Si vous voulez exclure carrement les notebooks : decommenter
+# *.ipynb
+
+# --- Runs et resultats d'experiences ---
+runs/
+runs_ct/
+logs/
+outputs/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+wandb/
+mlruns/
+xai_outputs/
+results.csv
+summary.csv
+stats.csv
+
+# --- IDE et editeurs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS specifiques ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Archives et builds ---
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+build/
+dist/
+
+# --- Fichiers temporaires ---
+*.log
+*.tmp
+*.bak
+*.cache
+*~.lock
+
+# --- Secrets (NE JAMAIS commiter) ---
+.env
+*.key
+*.pem
+*credentials*
+*secret*
+*token*
+config_local.yaml
+
+# --- Bibliographie (deja sur le PC, pas dans le code) ---
+mrgrt_seg_bibliography.bib
+
+# --- Scripts d'install temporaires ---
+install_outils_these.bat
+install_slicer_zotero.bat

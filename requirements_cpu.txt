@@ -1,0 +1,22 @@
+# Dependances pour test local sur PC sans GPU.
+# PyTorch CPU s'installe separement via le wheel index officiel (cf setup_local.bat).
+
+monai>=1.3
+nibabel>=5.1
+numpy>=1.24
+scipy>=1.11
+scikit-learn>=1.3
+pandas>=2.0
+pyyaml>=6.0
+tqdm>=4.66
+matplotlib>=3.7
+SimpleITK>=2.3
+einops>=0.7
+
+# Notebook
+jupyter>=1.0
+ipykernel>=6.25
+
+# Data prep DICOM/RT
+pydicom>=2.4
+rt-utils>=1.2
