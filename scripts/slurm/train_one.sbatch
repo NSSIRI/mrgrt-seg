@@ -6,6 +6,8 @@
 #   sbatch scripts/slurm/train_one.sbatch unet 0
 #   sbatch scripts/slurm/train_one.sbatch segresnet 2
 #   sbatch scripts/slurm/train_one.sbatch unet 0 configs/ct.yaml
+#   sbatch scripts/slurm/train_one.sbatch unet 0 configs/default.yaml --epochs 5
+#   sbatch scripts/slurm/train_one.sbatch unet 0 configs/default.yaml --resume auto
 # =====================================================================
 #SBATCH --job-name=mrgrt_train
 #SBATCH --partition=gpu-prodq
@@ -21,15 +23,20 @@
 set -euo pipefail
 mkdir -p logs
 
-MODEL=${1:?"usage: sbatch train_one.sbatch <unet|segresnet> <fold> [config]"}
-FOLD=${2:?"usage: sbatch train_one.sbatch <unet|segresnet> <fold> [config]"}
+MODEL=${1:?"usage: sbatch train_one.sbatch <unet|segresnet> <fold> [config] [extra args...]"}
+FOLD=${2:?"usage: sbatch train_one.sbatch <unet|segresnet> <fold> [config] [extra args...]"}
 CONFIG=${3:-configs/default.yaml}
+# Args supplementaires (ex: --epochs 5 --resume) transmis tels quels a train.py
+EXTRA_ARGS=("${@:4}")
 
 echo "============================================"
 echo " Job ID  : $SLURM_JOB_ID"
 echo " Node    : $SLURMD_NODENAME"
 echo " Modele  : $MODEL  | Fold : $FOLD"
 echo " Config  : $CONFIG"
+if [ ${#EXTRA_ARGS[@]} -gt 0 ]; then
+    echo " Extra   : ${EXTRA_ARGS[*]}"
+fi
 echo " Started : $(date)"
 echo "============================================"
 
@@ -41,6 +48,6 @@ export PYTHONNOUSERSITE=1
 
 python -c "import torch; assert torch.cuda.is_available(), 'CUDA indisponible sur ce noeud!'"
 
-python scripts/train.py --model "$MODEL" --fold "$FOLD" --config "$CONFIG"
+python scripts/train.py --model "$MODEL" --fold "$FOLD" --config "$CONFIG" "${EXTRA_ARGS[@]}"
 
 echo "Finished : $(date)"
