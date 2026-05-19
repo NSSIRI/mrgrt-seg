@@ -1,0 +1,22 @@
+{
+  "title": "MRgRT OAR Thorax (clean, n=303)",
+  "id": "TON_USER_KAGGLE/mrgrt-oar-thorax-clean",
+  "licenses": [
+    {
+      "name": "CC-BY-NC-SA-4.0"
+    }
+  ],
+  "description": "Thoracic organs-at-risk (OAR) segmentation dataset derived from TotalSegmentator MRI v2.0.0 (Zenodo DOI 10.5281/zenodo.14710732). Quality filter applied: cranio-caudal FOV >= 120 mm, lung volume >= 300 mL, heart volume >= 50 mL, esophagus volume >= 5 mL, lungs not touching image boundaries. 303 patients out of 616 retained (49.2%). NIfTI format, 4 OAR classes. Source license: CC-BY-NC-SA-4.0. Filtering script: scripts/transfer/05_filter_quality.py in https://github.com/NSSIRI/mrgrt-seg",
+  "keywords": [
+    "medical-imaging",
+    "mri",
+    "segmentation",
+    "radiotherapy",
+    "deep-learning",
+    "lung",
+    "heart",
+    "esophagus",
+    "quality-filtering",
+    "mrgrt"
+  ]
+}
