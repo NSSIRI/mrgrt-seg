@@ -1,6 +1,6 @@
 #!/bin/bash
 # =====================================================================
-# Entraine 1 modele x 1 fold sur MARWAN - partition gpu-prodq (7 jours)
+# Entraine 1 modele x 1 fold sur MARWAN - partition gpu-prodq
 #
 # Usage (depuis ~/mrgrt-seg sur MARWAN) :
 #   sbatch scripts/slurm/train_one.sbatch unet 0
@@ -11,6 +11,8 @@
 # =====================================================================
 #SBATCH --job-name=mrgrt_train
 #SBATCH --partition=gpu-prodq
+#SBATCH --qos=gpu
+#SBATCH --account=gpu_users
 #SBATCH --gres=gpu:1
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
