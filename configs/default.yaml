@@ -6,8 +6,8 @@ experiment:
 
 data:
   root: "data/"
-  image_filename: "image.nii.gz"
-  label_filename: "label.nii.gz"
+  image_filename: "image.nii"
+  label_filename: "label.nii"
   num_classes: 5
   class_names: ["background", "poumon_g", "poumon_d", "coeur", "oesophage"]
   modality: "mri"
