@@ -142,6 +142,15 @@ def convert_patient(src_dir: Path, dst_dir: Path) -> dict:
             return {"status": "error",
                     "reason": f"shape mismatch pour {organ_name} "
                               f"({organ_data.shape} vs {img_shape})"}
+        # CRITIQUE : verifier que l'organe a des voxels non-nuls.
+        # TotalSegmentator MRI v2 contient des fichiers d'organe VIDES (tous a 0)
+        # pour les patients ou l'organe n'est pas dans le FOV. Sans ce check,
+        # `classes_present` est augmente meme avec un fichier vide, ce qui
+        # produit des label.nii.gz vides qui passent le filtre qualite.
+        n_vox_organ = int(organ_data.sum())
+        if n_vox_organ < 10:  # seuil tres bas (10 voxels = ~0.5 mL)
+            organs_missing.append(f"{organ_name} (fichier present mais vide)")
+            continue
         # Priorite : on n'ecrase que les voxels background
         label[organ_data & (label == 0)] = class_id
         organs_found.append(organ_name)

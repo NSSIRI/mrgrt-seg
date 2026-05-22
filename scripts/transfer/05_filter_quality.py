@@ -131,6 +131,18 @@ def evaluate_quality(metrics: dict, args) -> tuple[bool, list[str]]:
         return False, [f"erreur: {metrics.get('reason', '?')}"]
 
     reasons = []
+
+    # Verifier qu'au moins min_organs OAR sont presents (defaut 4 = tous).
+    # Sans ce check, les labels VIDES (que classe 0) passent le filtre car
+    # aucun organe n'est "trop petit" (boucle vide sur volumes_ml = aucune
+    # exclusion). Ce bug a laisse passer ~85% de labels vides dans le
+    # premier dataset clean (303 patients dont 258 vides).
+    classes_present = metrics.get("classes_present", [])
+    if len(classes_present) < args.min_organs:
+        reasons.append(f"seulement {len(classes_present)}/{args.min_organs} organes presents "
+                       f"(classes={classes_present}, label vide ou incomplet)")
+        return False, reasons
+
     # FOV cranio-caudal
     if metrics["fov_cc_mm"] < args.min_fov_cc_mm:
         reasons.append(f"FOV cranio-caudal trop court "
@@ -178,6 +190,11 @@ def main():
                         help="Volume minimum oesophage en mL (defaut 5)")
     parser.add_argument("--min_fov_cc_mm", type=float, default=180,
                         help="FOV cranio-caudal minimum en mm (defaut 180)")
+    parser.add_argument("--min_organs", type=int, default=4,
+                        help="Nombre minimum d'OAR presents dans le label "
+                             "(defaut 4 = exige les 4 OAR poumon_g+poumon_d+"
+                             "coeur+oesophage). Mettre 3 pour tolerer un "
+                             "organe manquant.")
     parser.add_argument("--strict_boundary", action="store_true",
                         help="Rejeter aussi si coeur/oesophage touche un bord")
     args = parser.parse_args()
