@@ -24,6 +24,10 @@ def build_model(name: str, in_channels: int, out_channels: int,
             norm="instance",
         )
     elif name == "segresnet":
+        # IMPORTANT : pour GroupNorm dans MONAI il faut passer un tuple
+        # (norm_name, params_dict). Avec une simple string "group", MONAI
+        # appelle GroupNorm() sans num_groups -> TypeError.
+        # On utilise GroupNorm avec 8 groupes (default MONAI SegResNet).
         kw = dict(
             spatial_dims=3,
             in_channels=in_channels,
@@ -32,7 +36,7 @@ def build_model(name: str, in_channels: int, out_channels: int,
             blocks_down=(1, 2, 2, 4),
             blocks_up=(1, 1, 1),
             dropout_prob=0.2,
-            norm="group",
+            norm=("GROUP", {"num_groups": 8}),
         )
         if segresnet_kwargs:
             kw.update(segresnet_kwargs)
