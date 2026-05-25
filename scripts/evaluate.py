@@ -132,8 +132,13 @@ def main():
                 inputs=x, roi_size=patch_size, sw_batch_size=2,
                 predictor=model, overlap=overlap, mode="gaussian",
             )
-            pred = post_pred(logits[0]).unsqueeze(0)
-            lbl = post_label(y[0]).unsqueeze(0)
+            # Metriques calculees sur CPU : les distances de surface (HD95,
+            # Surface DSC) utilisent get_mask_edges, qui sur GPU passe par
+            # cuCIM/cupy et echoue a compiler son kernel CUDA sur les envs
+            # recents (Kaggle torch 2.10+cu128 : "Thrust requires C++17").
+            # Le calcul CPU (scipy) est robuste et rapide pour 4 classes.
+            pred = post_pred(logits[0]).unsqueeze(0).cpu()
+            lbl = post_label(y[0]).unsqueeze(0).cpu()
 
             row = {"patient_id": pid}
             for mname, metric in metrics.items():
