@@ -47,6 +47,10 @@ def main():
     parser.add_argument("--ckpt", default=None,
                         help="Chemin du checkpoint. Defaut: runs/<model>_fold<fold>/best.pt")
     parser.add_argument("--data_root", default=None, help="Override config.data.root")
+    parser.add_argument("--image_filename", default=None,
+                        help="Override config.data.image_filename (ex: image.nii.gz en local)")
+    parser.add_argument("--label_filename", default=None,
+                        help="Override config.data.label_filename (ex: label.nii.gz en local)")
     parser.add_argument("--out", default=None,
                         help="Chemin du CSV de sortie. Defaut: results/<model>_fold<fold>_metrics.csv")
     parser.add_argument("--device", default=None, help="cuda ou cpu (auto si non specifie)")
@@ -55,6 +59,10 @@ def main():
     cfg = yaml.safe_load(Path(args.config).read_text())
     if args.data_root:
         cfg["data"]["root"] = args.data_root
+    if args.image_filename:
+        cfg["data"]["image_filename"] = args.image_filename
+    if args.label_filename:
+        cfg["data"]["label_filename"] = args.label_filename
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     num_classes = cfg["data"]["num_classes"]
