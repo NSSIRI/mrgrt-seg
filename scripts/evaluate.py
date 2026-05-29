@@ -17,12 +17,43 @@ Exemples :
 from __future__ import annotations
 import argparse
 import csv
+import os
 from pathlib import Path
 import sys
 
 import numpy as np
 import torch
 import yaml
+
+# IMPORTANT : sur Kaggle (torch 2.10+cu128), cuCIM utilise par MONAI pour
+# HD95/Surface DSC echoue a compiler son kernel CUDA ("Thrust requires
+# C++17"). On REMPLACE directement cucim_binary_erosion par scipy.
+# (le simple flag has_cucim=False ne suffit pas car MONAI appelle la
+# fonction sans verifier le flag a l'execution).
+try:
+    import monai.metrics.utils as _mmu
+    import scipy.ndimage as _scipy_ndi
+    import numpy as _np
+    import torch as _torch_for_patch
+
+    def _scipy_binary_erosion_patch(arr, *args, **kwargs):
+        """Remplace cucim_binary_erosion par scipy.ndimage.binary_erosion.
+        Convertit en numpy si l'entree est un tensor/cupy array."""
+        if hasattr(arr, "get"):     # cupy array
+            arr = arr.get()
+        if hasattr(arr, "cpu"):     # torch tensor
+            arr = arr.cpu().numpy()
+        if not isinstance(arr, _np.ndarray):
+            arr = _np.asarray(arr)
+        return _scipy_ndi.binary_erosion(arr.astype(bool))
+
+    # Patch des deux endroits ou MONAI peut appeler cuCIM
+    _mmu.cucim_binary_erosion = _scipy_binary_erosion_patch
+    if hasattr(_mmu, "has_cucim"):
+        _mmu.has_cucim = False
+    print("[fix] cucim_binary_erosion remplace par scipy -> HD95/SDSC OK")
+except Exception as _e:
+    print(f"[warn] patch cuCIM impossible : {_e}")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
