@@ -25,7 +25,15 @@ GITHUB_REPO_NAME = "mrgrt-seg"
 GITHUB_BRANCH = "main"
 GITHUB_TOKEN_SECRET_NAME = "GITHUB_TOKEN"
 
-KAGGLE_INPUT_DATASET = "/kaggle/input/mrgrt-oar-thorax-clean-v2"  # le dataset 187 patients (.nii)
+# Le dataset peut etre monte a 2 endroits selon comment il est attache :
+#   - /kaggle/input/mrgrt-oar-thorax-clean-v2                       (Add Input UI classique)
+#   - /kaggle/input/datasets/abdelhalimnssiri/mrgrt-oar-thorax-clean-v2  (push CLI / partage)
+# On essaie les deux, on garde celui qui existe.
+KAGGLE_INPUT_CANDIDATES = [
+    "/kaggle/input/mrgrt-oar-thorax-clean-v2",
+    "/kaggle/input/datasets/abdelhalimnssiri/mrgrt-oar-thorax-clean-v2",
+]
+KAGGLE_INPUT_DATASET = None  # auto-detecte plus bas
 # Dossier ou Kaggle a monte l'output du notebook d'entrainement.
 # Apres "Add Input -> Notebook Output", regarde le panneau de droite pour le chemin exact.
 CHECKPOINT_INPUT = "/kaggle/input/mrgrt-train-unet-fold0"  # <-- slug de ton notebook training
@@ -49,11 +57,16 @@ def run(cmd, cwd=None, check=True):
                           stdout=sys.stdout, stderr=sys.stderr)
 
 
-# 0) Token GitHub
+# 0) Token GitHub (facultatif : si le repo est public, pas besoin de secret)
 if GITHUB_TOKEN_SECRET_NAME:
-    from kaggle_secrets import UserSecretsClient
-    _token = UserSecretsClient().get_secret(GITHUB_TOKEN_SECRET_NAME)
-    print(f"[0] Token GitHub recupere (longueur={len(_token)})")
+    try:
+        from kaggle_secrets import UserSecretsClient
+        _token = UserSecretsClient().get_secret(GITHUB_TOKEN_SECRET_NAME)
+        print(f"[0] Token GitHub recupere (longueur={len(_token)})")
+    except Exception as e:
+        print(f"[0] Pas de secret '{GITHUB_TOKEN_SECRET_NAME}' ({type(e).__name__}). "
+              f"Clone sans authentification (le repo doit etre public).")
+        _token = None
 repo_url = (f"https://{GITHUB_USER}:{_token}@github.com/{GITHUB_USER}/{GITHUB_REPO_NAME}.git"
             if _token else f"https://github.com/{GITHUB_USER}/{GITHUB_REPO_NAME}.git")
 
@@ -78,10 +91,26 @@ print(f"   torch={torch.__version__} | CUDA={torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"   GPU : {torch.cuda.get_device_name(0)}")
 
-# 3) Lien data/ -> dataset Kaggle
-print(f"\n[3] Lien data/ -> {KAGGLE_INPUT_DATASET}")
-if not Path(KAGGLE_INPUT_DATASET).exists():
-    raise RuntimeError(f"Dataset non monte : {KAGGLE_INPUT_DATASET}")
+# 3) Lien data/ -> dataset Kaggle (auto-detect du chemin)
+print(f"\n[3] Lien data/ -> auto-detect parmi {len(KAGGLE_INPUT_CANDIDATES)} candidats")
+for cand in KAGGLE_INPUT_CANDIDATES:
+    if Path(cand).exists() and any(Path(cand).glob("PATIENT_s*")):
+        KAGGLE_INPUT_DATASET = cand
+        print(f"   trouve : {cand}")
+        break
+if KAGGLE_INPUT_DATASET is None:
+    # Listing pour debug
+    print("   ECHEC. Contenu de /kaggle/input :")
+    if Path("/kaggle/input").exists():
+        for item in sorted(Path("/kaggle/input").iterdir()):
+            print(f"     {item}")
+            if item.is_dir():
+                for sub in list(item.iterdir())[:5]:
+                    print(f"       {sub}")
+    raise RuntimeError(
+        f"Dataset non monte dans aucun des candidats : {KAGGLE_INPUT_CANDIDATES}\n"
+        "Verifie Settings -> Add Input -> mrgrt-oar-thorax-clean-v2"
+    )
 data_link = REPO_DIR / "data"
 if data_link.exists() or data_link.is_symlink():
     (data_link.unlink() if data_link.is_symlink() else shutil.rmtree(data_link))
