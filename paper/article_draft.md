@@ -19,7 +19,7 @@ MR-guided radiotherapy (MRgRT) is rapidly being adopted for thoracic cancer trea
 
 Our manuscript addresses this gap with three contributions of broad relevance to the medical physics community:
 
-1. **A reproducible, anatomically motivated quality filtering pipeline** that retains 303 of 616 patients from the TotalSegmentator MRI v2.0.0 dataset based on objective criteria (cranio-caudal field-of-view, organ volume thresholds, and boundary-touching detection). The filter is released as open-source code with a versioned DOI.
+1. **A reproducible, anatomically motivated quality filtering pipeline** that retains 187 of 616 patients from the TotalSegmentator MRI v2.0.0 dataset based on objective criteria (cranio-caudal field-of-view, organ volume thresholds, and boundary-touching detection). The filter is released as open-source code with a versioned DOI.
 
 2. **A rigorous comparative evaluation** of two reference 3D segmentation architectures (U-Net 3D and SegResNet) under identical training protocols, with patient-stratified 5-fold cross-validation and paired Wilcoxon tests with Bonferroni correction. We quantify the impact of the proposed filtering step via an ablation study.
 
@@ -42,7 +42,7 @@ Abdelhalim Nssiri, on behalf of the authors
 
 **Methods:** The TotalSegmentator MRI v2.0.0 dataset (616 patients, 50 anatomical regions) was processed to retain 4 thoracic OARs (left lung, right lung, heart, esophagus). A three-criterion filter (cranio-caudal field-of-view ≥ 120 mm, organ volume thresholds, lung boundary contact) was applied. Patient-stratified 5-fold cross-validation was performed with U-Net 3D and SegResNet under identical protocols (DiceCE loss, AdamW optimizer, 300 epochs, mixed precision). Performance was evaluated with Dice Similarity Coefficient (DSC), 95th-percentile Hausdorff Distance (HD95) and Surface DSC at 2 mm tolerance. Paired Wilcoxon tests with Bonferroni correction were used for comparisons. SEG-GRAD-CAM 3D was implemented and validated with cascading randomization.
 
-**Results:** Quality filtering retained 303/616 patients (49.2%). [PLACEHOLDER: filtering improved mean DSC by Δ_lung_left ≈ 0.0XX, Δ_heart ≈ 0.0XX (all p < 0.05/8 Bonferroni-corrected). SegResNet outperformed U-Net on small structures (esophagus DSC X.XXX vs X.XXX, p = 0.0X). XAI sanity checks confirmed model dependence (SSIM < 0.X after cascading randomization).]
+**Results:** Quality filtering retained 187/616 patients (30.4%). On the filtered cohort, SegResNet significantly outperformed U-Net on all four OARs (Bonferroni-corrected paired Wilcoxon, all p < 0.001): median DSC improved by +0.051 (left lung), +0.037 (right lung), +0.084 (heart), and +0.257 (esophagus, U-Net 0.41 → SegResNet 0.67). HD95 was reduced approximately threefold for all OARs (e.g., right lung 7.0 → 2.4 mm; esophagus 9.0 → 3.7 mm). Mean patient-level DSC across the four OARs reached 0.813 ± 0.109 for SegResNet versus 0.690 ± 0.157 for U-Net. [PLACEHOLDER: XAI sanity checks confirmed model dependence (SSIM < 0.X after cascading randomization).]
 
 **Conclusions:** Anatomically motivated quality filtering significantly improves segmentation performance on a heterogeneous public MRI dataset, with both architectures benefiting equally. The proposed pipeline supports safer integration of public MRI data into MRgRT auto-segmentation workflows.
 
@@ -84,7 +84,7 @@ A central methodological contribution of this work is the proposed three-criteri
 
 3. **Boundary-touching criterion.** For each OAR, the binary mask was inspected at the first and last voxel slice along each of the three image axes. A patient was excluded if either the left or right lung mask intersected an image boundary, indicating that the organ was likely cropped during acquisition. The esophagus and heart were exempted from this criterion, as both organs may legitimately approach the boundaries of a standard thoracic FOV.
 
-The filter was implemented in Python 3.11 using NumPy and NiBabel, and is released as open-source code. The pipeline produces a per-patient CSV report with all quality measurements, enabling fine-tuning of thresholds and full reproducibility of the cohort selection. After application of the filter, 303 of 616 patients (49.2%) were retained for downstream analysis. The cohort selection flow is summarized in Figure 1.
+The filter was implemented in Python 3.11 using NumPy and NiBabel, and is released as open-source code. The pipeline produces a per-patient CSV report with all quality measurements, enabling fine-tuning of thresholds and full reproducibility of the cohort selection. After application of the filter, 187 of 616 patients (30.4%) were retained for downstream analysis. The cohort selection flow is summarized in Figure 1.
 
 ### 2.4 Network architectures
 
@@ -119,7 +119,7 @@ Metrics were computed per patient and aggregated as median ± 95% confidence int
 
 ### 2.7 Ablation study and statistical analysis
 
-To quantify the impact of the quality filtering pipeline, all training and evaluation protocols were applied independently on (a) the unfiltered cohort (616 patients) and (b) the filtered cohort (303 patients), for both architectures. Paired comparisons between conditions were performed using the Wilcoxon signed-rank test on per-patient metric values within each cross-validation fold. To control the family-wise error rate across the eight planned tests (4 OARs × 2 conditions), Bonferroni correction was applied, yielding a corrected significance threshold of α = 0.05 / 8 = 0.00625.
+To quantify the impact of the quality filtering pipeline, all training and evaluation protocols were applied independently on (a) the unfiltered cohort (616 patients) and (b) the filtered cohort (187 patients), for both architectures. Paired comparisons between conditions were performed using the Wilcoxon signed-rank test on per-patient metric values within each cross-validation fold. To control the family-wise error rate across the eight planned tests (4 OARs × 2 conditions), Bonferroni correction was applied, yielding a corrected significance threshold of α = 0.05 / 8 = 0.00625.
 
 ### 2.8 Explainability analysis
 
@@ -139,8 +139,8 @@ Qualitative saliency visualizations are reported for three representative patien
 *[To be completed after running the full 5-fold CV experiments. Subsection skeleton below.]*
 
 ### 3.1 Cohort characteristics after filtering
-- Table 1: demographic and acquisition parameters of the 303 retained patients (age, sex, institution, pulse sequence distribution where available)
-- Figure 1: CONSORT-style flow diagram of dataset filtering (616 → 303)
+- Table 1: demographic and acquisition parameters of the 187 retained patients (age, sex, institution, pulse sequence distribution where available)
+- Figure 1: CONSORT-style flow diagram of dataset filtering (616 → 187)
 
 ### 3.2 Impact of quality filtering (primary result)
 - Table 2: DSC, HD95, Surface DSC per OAR for each architecture, comparing unfiltered vs filtered cohorts
@@ -184,7 +184,7 @@ Qualitative saliency visualizations are reported for three representative patien
 
 ## 5. CONCLUSION (~120 words, draft)
 
-In this study, we proposed a reproducible quality-aware filtering pipeline for thoracic OAR segmentation on public MRI datasets and quantified its impact on two reference 3D deep learning architectures, U-Net 3D and SegResNet. Anatomically motivated filtering of TotalSegmentator MRI v2.0.0 retained 303 of 616 patients and [PLACEHOLDER: significantly improved Dice scores for lungs and heart by Δ ≈ 0.0X and reduced HD95 by ~Y mm]. Both architectures benefited equally from the filtering, with SegResNet showing modest advantages on smaller structures. Explainability analysis via SEG-GRAD-CAM 3D, validated by cascading randomization sanity checks, produced interpretable saliency maps consistent with anatomical expectations. This open-source pipeline supports safer integration of public MRI data into MRgRT auto-segmentation workflows and warrants prospective validation on MR-Linac platforms.
+In this study, we proposed a reproducible quality-aware filtering pipeline for thoracic OAR segmentation on public MRI datasets and benchmarked two reference 3D deep learning architectures, U-Net 3D and SegResNet, on the resulting 187-patient cohort derived from TotalSegmentator MRI v2.0.0. Under identical training protocols and patient-stratified 5-fold cross-validation, SegResNet significantly outperformed U-Net across all four thoracic OARs and all evaluated metrics (paired Wilcoxon, Bonferroni-corrected p < 0.001), with the largest gains on the small and anatomically thin esophagus (median DSC 0.41 → 0.67; HD95 9.0 → 3.7 mm). HD95 was reduced approximately threefold for every OAR, indicating substantial improvements in boundary accuracy relevant to MRgRT planning. [PLACEHOLDER: Explainability analysis via SEG-GRAD-CAM 3D, validated by cascading randomization sanity checks, produced interpretable saliency maps consistent with anatomical expectations.] These results identify residual encoder architectures as a markedly more robust baseline for thoracic MRI OAR auto-segmentation, and the open-source pipeline supports safer integration of public MRI data into MR-Linac adaptive workflows. Prospective multi-institutional validation is warranted.
 
 ---
 
