@@ -104,16 +104,19 @@ if not notebooks_root.exists():
 
 ckpts = {}
 for fold in FOLDS:
-    # Pattern : .../mrgrt-train-<MODEL>-fold<N>/runs/<MODEL>_fold<N>/best.pt
-    pattern = f"*/mrgrt-train-{MODEL}-fold{fold}/runs/{MODEL}_fold{fold}/best.pt"
-    found = list(notebooks_root.glob(pattern))
-    if not found:
-        # Pattern fallback : sans username
-        pattern2 = f"**/{MODEL}_fold{fold}/best.pt"
-        found = list(notebooks_root.rglob(pattern2))
+    # Le script train.py sauvegarde toujours dans runs/<MODEL>_fold<N>/best.pt
+    # quelle que soit la facon dont le notebook Kaggle est nomme.
+    # Donc on cherche cette structure interne (rglob) dans TOUS les input notebooks.
+    pattern = f"**/{MODEL}_fold{fold}/best.pt"
+    found = list(notebooks_root.rglob(pattern))
     if found:
+        # Si plusieurs notebooks ont le meme checkpoint, prendre le plus recent
+        found.sort(key=lambda p: p.stat().st_mtime, reverse=True)
         ckpts[fold] = found[0]
-        print(f"   fold {fold} : {found[0]}")
+        if len(found) > 1:
+            print(f"   fold {fold} : {found[0]}  ({len(found)} candidats, on prend le plus recent)")
+        else:
+            print(f"   fold {fold} : {found[0]}")
     else:
         print(f"   fold {fold} : NOT FOUND (skip)")
 

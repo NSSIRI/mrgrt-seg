@@ -29,9 +29,9 @@ Write-Host " BATCH EVAL 5 folds x 2 modeles" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 
 # --- Backup kaggle.json actuel (compte 1 par defaut) -----------------
-$kaggleConf = "$env:USERPROFILE\.kaggle\kaggle.json"
-$kaggleConf1 = "$env:USERPROFILE\.kaggle\kaggle_compte1.json"
-$kaggleConf2 = "$env:USERPROFILE\.kaggle\kaggle_compte2.json"
+$kaggleConf = "$env:USERPROFILE\.kaggle\access_token"
+$kaggleConf1 = "$env:USERPROFILE\.kaggle\access_token_compte1"
+$kaggleConf2 = "$env:USERPROFILE\.kaggle\access_token_compte2"
 
 if (-not (Test-Path $kaggleConf1)) {
     Copy-Item $kaggleConf $kaggleConf1
@@ -40,10 +40,11 @@ if (-not (Test-Path $kaggleConf1)) {
 
 if (-not (Test-Path $kaggleConf2)) {
     Write-Host "[ATTENTION] $kaggleConf2 ABSENT" -ForegroundColor Yellow
-    Write-Host "  Tu dois telecharger kaggle.json du compte 2 :"
+    Write-Host "  Tu dois sauvegarder le access_token du compte 2 :"
     Write-Host "  1. Login compte 2 (nssiri02) sur Kaggle"
     Write-Host "  2. https://www.kaggle.com/settings -> API -> Create New Token"
-    Write-Host "  3. Move-Item $env:USERPROFILE\Downloads\kaggle.json $kaggleConf2"
+    Write-Host "  3. Sauve le token via :"
+    Write-Host "     [System.IO.File]::WriteAllText('$kaggleConf2', 'KGAT_xxxx', [System.Text.ASCIIEncoding]::new())"
     Write-Host ""
     $ans = Read-Host "Continuer avec compte 1 seulement (UNet) ? (O/N)"
     if ($ans -ne "O" -and $ans -ne "o") { exit 0 }
@@ -111,10 +112,11 @@ function Invoke-KaggleBatchEval {
     Set-Content -Path (Join-Path $tempDir "batch_eval.ipynb") -Value $ipynb -Encoding UTF8
 
     # Kernel-metadata avec inputs (dataset + 5 notebooks training)
+    # Convention noms : <model>-fold-<N>  (ex: unet-fold-0, segresnet-fold-3)
     $datasetSrc = "abdelhalimnssiri/mrgrt-oar-thorax-clean-v2"  # dataset partage
     $notebookSrcs = @()
     for ($f = 0; $f -le 4; $f++) {
-        $notebookSrcs += "$Username/mrgrt-train-$Model-fold$f"
+        $notebookSrcs += "$Username/$Model-fold-$f"
     }
     $kernelSrcsJson = ($notebookSrcs | ForEach-Object { "`"$_`"" }) -join ","
 
