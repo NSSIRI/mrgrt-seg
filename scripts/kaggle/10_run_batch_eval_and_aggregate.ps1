@@ -56,87 +56,37 @@ if (-not (Test-Path $kaggleConf2)) {
 # --- Helper : push un kernel via CLI --------------------------------
 function Invoke-KaggleBatchEval {
     param(
-        [string]$Username,    # abdelhalimnssiri ou nssiri02
-        [string]$Model,       # unet ou segresnet
-        [string]$KaggleConf   # path vers kaggle.json a utiliser
+        [string]$Username,        # abdelhalimnssiri ou nssiri02
+        [string]$Model,           # unet ou segresnet
+        [string]$TokenSourcePath  # path vers access_token a utiliser (compte 1 ou 2)
     )
 
     Write-Host ""
     Write-Host "============================================" -ForegroundColor Yellow
-    Write-Host " $Model.ToUpper() batch eval ($Username)" -ForegroundColor Yellow
+    Write-Host " $($Model.ToUpper()) batch eval ($Username)" -ForegroundColor Yellow
     Write-Host "============================================" -ForegroundColor Yellow
 
-    # Switch kaggle.json
-    Copy-Item $KaggleConf $kaggleConf -Force
+    # Switch token (compte 1 ou 2)
+    Copy-Item $TokenSourcePath $kaggleConf -Force
 
     $kernelId = "$Username/mrgrt-eval-$Model-batch"
     $tempDir = Join-Path $env:TEMP "kaggle_batch_eval_$Model"
     if (Test-Path $tempDir) { Remove-Item -Recurse -Force $tempDir }
     New-Item -ItemType Directory -Path $tempDir | Out-Null
 
-    # Copier batch_eval.py dans temp dir comme notebook
-    $batchPy = Join-Path $ProjectRoot "scripts\kaggle\batch_eval.py"
-    if (-not (Test-Path $batchPy)) {
-        Write-Host "[ERREUR] $batchPy absent" -ForegroundColor Red
+    # Generer batch_eval.ipynb + kernel-metadata.json via helper Python
+    # (UTF-8 sans BOM, JSON garanti correct)
+    $makeNb = Join-Path $ProjectRoot "scripts\kaggle\make_batch_notebook.py"
+    if (-not (Test-Path $makeNb)) {
+        Write-Host "[ERREUR] $makeNb absent" -ForegroundColor Red
         return $false
     }
 
-    # Generer le notebook .ipynb a partir du .py
-    $codeContent = Get-Content $batchPy -Raw
-    # Ajuste MODEL dans le code
-    $codeContent = $codeContent -replace 'MODEL = "unet"', "MODEL = `"$Model`""
-    $codeContent = $codeContent -replace 'MODEL = "segresnet"', "MODEL = `"$Model`""
-
-    # Echappe pour JSON
-    $codeEscaped = ($codeContent -split "`n" | ForEach-Object { '"' + ($_ -replace '\\', '\\' -replace '"', '\"' -replace "`r", "") + '\n"' }) -join ','
-
-    $ipynb = @"
-{
- "cells": [
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [$codeEscaped]
-  }
- ],
- "metadata": {
-  "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-  "language_info": {"name": "python", "version": "3.12"}
- },
- "nbformat": 4,
- "nbformat_minor": 5
-}
-"@
-    Set-Content -Path (Join-Path $tempDir "batch_eval.ipynb") -Value $ipynb -Encoding UTF8
-
-    # Kernel-metadata avec inputs (dataset + 5 notebooks training)
-    # Convention noms : <model>-fold-<N>  (ex: unet-fold-0, segresnet-fold-3)
-    $datasetSrc = "abdelhalimnssiri/mrgrt-oar-thorax-clean-v2"  # dataset partage
-    $notebookSrcs = @()
-    for ($f = 0; $f -le 4; $f++) {
-        $notebookSrcs += "$Username/$Model-fold-$f"
+    python $makeNb --model $Model --username $Username --out_dir $tempDir 2>&1 | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[ERREUR] generation notebook a echoue" -ForegroundColor Red
+        return $false
     }
-    $kernelSrcsJson = ($notebookSrcs | ForEach-Object { "`"$_`"" }) -join ","
-
-    $meta = @"
-{
-  "id": "$kernelId",
-  "title": "MRgRT eval $Model batch (5 folds)",
-  "code_file": "batch_eval.ipynb",
-  "language": "python",
-  "kernel_type": "notebook",
-  "is_private": true,
-  "enable_gpu": true,
-  "enable_tpu": false,
-  "enable_internet": true,
-  "dataset_sources": ["$datasetSrc"],
-  "competition_sources": [],
-  "kernel_sources": [$kernelSrcsJson]
-}
-"@
-    [System.IO.File]::WriteAllText((Join-Path $tempDir "kernel-metadata.json"), $meta, [System.Text.UTF8Encoding]::new($false))
 
     # Push
     Write-Host "Push du kernel..."
@@ -182,12 +132,12 @@ function Invoke-KaggleBatchEval {
 }
 
 # --- Run UNet (compte 1) -----------------------------------------------
-$unetOK = Invoke-KaggleBatchEval -Username "abdelhalimnssiri" -Model "unet" -KaggleConf $kaggleConf1
+$unetOK = Invoke-KaggleBatchEval -Username "abdelhalimnssiri" -Model "unet" -TokenSourcePath $kaggleConf1
 
 # --- Run SegResNet (compte 2) -----------------------------------------
 $segOK = $false
 if (-not $SkipCompte2) {
-    $segOK = Invoke-KaggleBatchEval -Username "nssiri02" -Model "segresnet" -KaggleConf $kaggleConf2
+    $segOK = Invoke-KaggleBatchEval -Username "nssiri02" -Model "segresnet" -TokenSourcePath $kaggleConf2
 }
 
 # --- Restore compte 1 -------------------------------------------------
