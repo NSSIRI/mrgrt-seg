@@ -127,28 +127,58 @@ def main():
     examples_dir = out_dir / f"{args.model}_fold{args.fold}_examples"
     examples_dir.mkdir(parents=True, exist_ok=True)
 
+    def center_crop_to_patch(x_tensor, y_arr, patch):
+        """Center-crop l'image et le label a la patch_size (128x128x64).
+        Si plus petit que patch dans un axe, pad avec des zeros.
+        Retourne (x_cropped_tensor, y_cropped_array, slices).
+        """
+        D, H, W = x_tensor.shape[-3:]
+        pd, ph, pw = patch
+        x_np = x_tensor[0, 0].cpu().numpy()
+        # Pad si plus petit que patch
+        pad = [(0, max(0, pd - D)), (0, max(0, ph - H)), (0, max(0, pw - W))]
+        if any(p[1] > 0 for p in pad):
+            x_np = np.pad(x_np, pad, mode="constant", constant_values=0)
+            y_arr = np.pad(y_arr, pad, mode="constant", constant_values=0)
+        D2, H2, W2 = x_np.shape
+        # Center crop
+        sd = (D2 - pd) // 2
+        sh = (H2 - ph) // 2
+        sw = (W2 - pw) // 2
+        slices = (slice(sd, sd + pd), slice(sh, sh + ph), slice(sw, sw + pw))
+        x_cropped = x_np[slices]
+        y_cropped = y_arr[slices]
+        x_t = torch.from_numpy(x_cropped).float().unsqueeze(0).unsqueeze(0).to(device)
+        return x_t, y_cropped, slices
+
     for i, batch in enumerate(val_loader):
         pid = val_items[i]["patient_id"]
-        x = batch["image"].to(device)
-        y = batch["label"][0, 0].cpu().numpy().astype(np.int32)  # 3D label volume
+        x_full = batch["image"].to(device)
+        y_full = batch["label"][0, 0].cpu().numpy().astype(np.int32)
+
+        # CRITIQUE : center-crop a patch_size pour eviter shape mismatch + OOM
+        try:
+            x, y, _ = center_crop_to_patch(x_full, y_full, tuple(patch_size))
+        except Exception as e:
+            print(f"  [{i+1}/{len(val_items)}] {pid} : crop FAIL ({e})")
+            continue
 
         row = {"patient_id": pid}
         for c, cname in enumerate(CLASS_NAMES, start=1):
-            # GT mask pour la classe c
             gt_mask = (y == c)
             if not gt_mask.any():
                 for m in ("in_organ_ratio", "pointing_accuracy", "spatial_entropy", "organ_baseline"):
                     row[f"{m}_{cname}"] = float("nan")
                 continue
 
-            # Calculer la heatmap pour cette classe
             try:
                 heat = cam.compute(x, target_class=c, patch_size=tuple(patch_size))
                 if isinstance(heat, torch.Tensor):
                     heat = heat.cpu().numpy()
-                # Aligner shape avec GT (au cas ou)
+                # Libere memoire GPU apres chaque forward+backward
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 if heat.shape != gt_mask.shape:
-                    # Upsampler/cropper a la shape du GT
                     h_t = torch.from_numpy(heat).float().unsqueeze(0).unsqueeze(0)
                     h_t = F.interpolate(h_t, size=gt_mask.shape, mode="trilinear", align_corners=False)
                     heat = h_t[0, 0].numpy()
@@ -156,17 +186,19 @@ def main():
                 print(f"  [{i+1}/{len(val_items)}] {pid} {cname} : ECHEC heatmap ({e})")
                 for m in ("in_organ_ratio", "pointing_accuracy", "spatial_entropy", "organ_baseline"):
                     row[f"{m}_{cname}"] = float("nan")
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 continue
 
             m = compute_all_metrics(heat, gt_mask)
             for k, v in m.items():
                 row[f"{k}_{cname}"] = v
 
-            # Sauve 3 exemples qualitatifs (3 premiers patients × esophage)
+            # Sauve 3 exemples qualitatifs (3 premiers patients avec esophage GT)
             if saved_examples < 3 and cname == "oesophage":
                 np.save(examples_dir / f"{pid}_{cname}_heatmap.npy", heat.astype(np.float32))
                 np.save(examples_dir / f"{pid}_{cname}_gtmask.npy", gt_mask.astype(np.uint8))
-                np.save(examples_dir / f"{pid}_image.npy", x[0, 0].cpu().numpy().astype(np.float32))
+                np.save(examples_dir / f"{pid}_image_crop.npy", x[0, 0].detach().cpu().numpy().astype(np.float32))
                 saved_examples += 1
 
         rows.append(row)
@@ -193,16 +225,23 @@ def main():
     # ----- 2) Adebayo cascading (1 seul patient pour gain de temps) -----
     if not args.skip_adebayo and len(val_items) > 0:
         print("\n[Adebayo] Cascading weight randomization (1 patient test)...")
-        # Re-charger le batch du premier patient (sans transformations train)
-        x_test = next(iter(val_loader))["image"].to(device)
+        # Re-charger le batch du premier patient et center-crop
+        first_batch = next(iter(val_loader))
+        y_first = first_batch["label"][0, 0].cpu().numpy().astype(np.int32)
+        x_test, _, _ = center_crop_to_patch(first_batch["image"].to(device), y_first, tuple(patch_size))
         target_c = 4  # esophage : le plus instructif
-        cam.cleanup()  # Reset hooks before re-creating
+        cam.cleanup()
 
         def compute_saliency_of(m: torch.nn.Module) -> np.ndarray:
             local_cam = SegGradCAM3D(m, target_layer="auto")
-            h = local_cam.compute(x_test, target_class=target_c, patch_size=tuple(patch_size))
-            local_cam.cleanup()
-            return h.cpu().numpy() if isinstance(h, torch.Tensor) else h
+            try:
+                h = local_cam.compute(x_test, target_class=target_c, patch_size=tuple(patch_size))
+                arr = h.cpu().numpy() if isinstance(h, torch.Tensor) else h
+            finally:
+                local_cam.cleanup()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            return arr
 
         results = cascading_weight_randomization(model, compute_saliency_of, seed=42)
         ade_csv = out_dir / f"{args.model}_fold{args.fold}_adebayo.csv"
