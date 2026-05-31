@@ -53,11 +53,26 @@ class SegGradCAM3D:
         self._fwd_handle.remove()
         self._bwd_handle.remove()
 
+    # Alias plus pratique pour le runner XAI
+    def cleanup(self):
+        self.remove_hooks()
+
     def __del__(self):
         try:
             self.remove_hooks()
         except Exception:
             pass
+
+    def compute(self, x, target_class, patch_size=None):
+        """Alias pour __call__ qui retourne le 1er sample en numpy/tensor 3D.
+
+        Si l'input est un volume entier (B=1, C=1, D, H, W), le tensor cam
+        retourne par __call__ a shape (1, D, H, W). On retourne le [0] = (D, H, W).
+        """
+        cam = self(x, target_class)  # tensor (B, D, H, W) ou (1, D, H, W)
+        if cam.dim() == 4 and cam.shape[0] == 1:
+            cam = cam[0]
+        return cam
 
     @torch.enable_grad()
     def __call__(self, x, target_class, mask_subset=None, normalize=True):
