@@ -99,11 +99,18 @@ def main():
         med_b, lo_b, hi_b = bootstrap_ci(vb)
         w = wilcoxon_signed_rank(va, vb)
         pvals.append(w["pvalue"])
+        # Cohen's interpretation of Wilcoxon's r
+        r_eff = w.get("effect_size_r", float("nan"))
+        if r_eff >= 0.5: r_size = "large"
+        elif r_eff >= 0.3: r_size = "medium"
+        elif r_eff >= 0.1: r_size = "small"
+        else: r_size = "negligible"
         results.append({
             "oar": c, "n": len(common),
             f"{args.name_a}_median": med_a, f"{args.name_a}_ci_low": lo_a, f"{args.name_a}_ci_high": hi_a,
             f"{args.name_b}_median": med_b, f"{args.name_b}_ci_low": lo_b, f"{args.name_b}_ci_high": hi_b,
             "median_diff": w["median_diff"], "pvalue": w["pvalue"],
+            "effect_size_r": r_eff, "effect_size_label": r_size,
         })
 
     # Bonferroni sur l'ensemble des classes testees
@@ -115,12 +122,13 @@ def main():
     # Affichage
     print(f"\n=== Comparaison {args.name_a} vs {args.name_b} (metrique: {args.metric}) ===")
     print(f"{'OAR':<11} {'n':>4} {args.name_a[:12]:>14} {args.name_b[:12]:>14} "
-          f"{'diff':>8} {'p':>9} {'p_bonf':>9} {'sig':>4}")
+          f"{'diff':>8} {'p':>9} {'p_bonf':>9} {'r':>6} {'taille':>10} {'sig':>4}")
     for r in results:
         print(f"{r['oar']:<11} {r['n']:>4} "
               f"{r[f'{args.name_a}_median']:>14.3f} {r[f'{args.name_b}_median']:>14.3f} "
               f"{r['median_diff']:>8.3f} {r['pvalue']:>9.4f} "
-              f"{r['pvalue_bonferroni']:>9.4f} {'OUI' if r['significant'] else 'non':>4}")
+              f"{r['pvalue_bonferroni']:>9.4f} {r['effect_size_r']:>6.3f} "
+              f"{r['effect_size_label']:>10} {'OUI' if r['significant'] else 'non':>4}")
 
     if args.out:
         import csv

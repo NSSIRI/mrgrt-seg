@@ -29,17 +29,31 @@ def post_processors(num_classes: int):
 
 
 def wilcoxon_signed_rank(scores_a, scores_b) -> dict:
-    from scipy.stats import wilcoxon
+    """Wilcoxon signed-rank test apparie + effect size r = |Z| / sqrt(N).
+
+    Cohen (1988) : r = 0.10 small, 0.30 medium, 0.50 large.
+    Cible publication MIA / Med Phys : r >= 0.5 souvent attendu pour des
+    differences "cliniquement significatives".
+    """
+    from scipy.stats import wilcoxon, norm
     a = np.asarray(scores_a, dtype=float)
     b = np.asarray(scores_b, dtype=float)
     diff = a - b
-    if np.allclose(diff, 0):
-        return {"statistic": 0.0, "pvalue": 1.0,
-                "mean_diff": 0.0, "median_diff": 0.0}
+    n_pairs = int((diff != 0).sum())
+    if n_pairs == 0:
+        return {"statistic": 0.0, "pvalue": 1.0, "mean_diff": 0.0,
+                "median_diff": 0.0, "effect_size_r": 0.0, "n_pairs": 0}
     stat, p = wilcoxon(a, b, alternative="two-sided")
+    # Effect size r = |Z| / sqrt(N) ; Z reconstruit a partir de p bilateral
+    # (approximation normale, valide pour N >= ~15-20).
+    p_one = max(p / 2.0, 1e-300)
+    z = abs(norm.isf(p_one))  # |Z|
+    r = float(z / np.sqrt(n_pairs)) if n_pairs > 0 else 0.0
     return {"statistic": float(stat), "pvalue": float(p),
             "mean_diff": float(diff.mean()),
-            "median_diff": float(np.median(diff))}
+            "median_diff": float(np.median(diff)),
+            "effect_size_r": r,
+            "n_pairs": n_pairs}
 
 
 def bonferroni(pvals, n_tests=None):

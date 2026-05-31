@@ -1,38 +1,41 @@
-# Table 3 — Architecture comparison: U-Net vs SegResNet (5-fold CV, n=187 patients)
+# Table 3 — U-Net vs SegResNet, 5-fold CV (n=187), with Wilcoxon's r effect size
 
-Paired Wilcoxon signed-rank test with Bonferroni correction (×4 OARs).
-Values are median [IQR]. Δ = SegResNet − U-Net.
+Paired Wilcoxon signed-rank test, Bonferroni-corrected (×4 OARs).
+Effect size r = |Z|/sqrt(N). Cohen interpretation: 0.10 small, 0.30 medium, 0.50 large.
+Δ = SegResNet − U-Net.
 
 ## DSC (higher is better)
 
-| OAR | n | U-Net | SegResNet | Δ | p (Bonf.) | Sig. |
-|---|---:|---:|---:|---:|---:|:--:|
-| Left lung | 187 | 0.881 [0.801–0.925] | 0.933 [0.891–0.957] | +0.051 | <0.001 | \*\*\* |
-| Right lung | 187 | 0.904 [0.818–0.940] | 0.941 [0.908–0.964] | +0.037 | <0.001 | \*\*\* |
-| Heart | 187 | 0.801 [0.661–0.864] | 0.885 [0.820–0.923] | +0.084 | <0.001 | \*\*\* |
-| Esophagus | 187 | 0.409 [0.265–0.530] | 0.666 [0.543–0.755] | +0.257 | <0.001 | \*\*\* |
+| OAR | n | U-Net (median) | SegResNet (median) | Δ | p (Bonf.) | r | Effect size |
+|---|---:|---:|---:|---:|---:|---:|:--:|
+| Left lung | 187 | 0.881 | 0.933 | +0.051 | <0.001 \*\*\* | 0.833 | **large** |
+| Right lung | 186 | 0.904 | 0.941 | +0.037 | <0.001 \*\*\* | 0.781 | **large** |
+| Heart | 186 | 0.801 | 0.885 | +0.084 | <0.001 \*\*\* | 0.854 | **large** |
+| Esophagus | 184 | 0.409 | 0.666 | +0.257 | <0.001 \*\*\* | 0.838 | **large** |
 
 ## HD95 (mm) (lower is better)
 
-| OAR | n | U-Net | SegResNet | Δ | p (Bonf.) | Sig. |
-|---|---:|---:|---:|---:|---:|:--:|
-| Left lung | 187 | 8.3 [3.7–56.5] | 3.0 [2.0–8.3] | -5.3 | <0.001 | \*\*\* |
-| Right lung | 187 | 7.0 [3.0–42.0] | 2.4 [1.4–5.9] | -4.6 | <0.001 | \*\*\* |
-| Heart | 187 | 9.9 [5.1–30.9] | 5.7 [3.0–9.4] | -4.3 | <0.001 | \*\*\* |
-| Esophagus | 183 | 9.0 [5.2–17.3] | 3.7 [2.3–9.4] | -5.3 | <0.001 | \*\*\* |
+| OAR | n | U-Net (median) | SegResNet (median) | Δ | p (Bonf.) | r | Effect size |
+|---|---:|---:|---:|---:|---:|---:|:--:|
+| Left lung | 184 | 8.3 | 3.0 | -5.3 | <0.001 \*\*\* | 0.689 | **large** |
+| Right lung | 180 | 7.0 | 2.4 | -4.6 | <0.001 \*\*\* | 0.700 | **large** |
+| Heart | 183 | 9.9 | 5.7 | -4.3 | <0.001 \*\*\* | 0.694 | **large** |
+| Esophagus | 183 | 9.0 | 3.7 | -5.3 | <0.001 \*\*\* | 0.521 | **large** |
 
 ## Surface DSC @2mm (higher is better)
 
-| OAR | n | U-Net | SegResNet | Δ | p (Bonf.) | Sig. |
-|---|---:|---:|---:|---:|---:|:--:|
-| Left lung | 187 | 0.793 [0.643–0.894] | 0.919 [0.836–0.974] | +0.126 | <0.001 | \*\*\* |
-| Right lung | 187 | 0.834 [0.705–0.927] | 0.943 [0.850–0.983] | +0.109 | <0.001 | \*\*\* |
-| Heart | 187 | 0.687 [0.509–0.797] | 0.845 [0.739–0.922] | +0.159 | <0.001 | \*\*\* |
-| Esophagus | 187 | 0.631 [0.450–0.743] | 0.882 [0.755–0.936] | +0.251 | <0.001 | \*\*\* |
+| OAR | n | U-Net (median) | SegResNet (median) | Δ | p (Bonf.) | r | Effect size |
+|---|---:|---:|---:|---:|---:|---:|:--:|
+| Left lung | 187 | 0.793 | 0.919 | +0.126 | <0.001 \*\*\* | 0.846 | **large** |
+| Right lung | 186 | 0.834 | 0.943 | +0.109 | <0.001 \*\*\* | 0.802 | **large** |
+| Heart | 186 | 0.687 | 0.845 | +0.159 | <0.001 \*\*\* | 0.865 | **large** |
+| Esophagus | 184 | 0.631 | 0.882 | +0.251 | <0.001 \*\*\* | 0.786 | **large** |
 
-\*\*\* p < 0.001 (Bonferroni-corrected for 4 simultaneous tests per metric)
+\*\*\* p < 0.001 Bonferroni-corrected. All effect sizes >= 0.50 (Cohen 'large').
 
 ## Mean DSC across the 4 OARs (per patient)
 
-- **U-Net** : 0.731 [0.632–0.798] (mean 0.690 ± 0.157, n=187)
-- **SegResNet** : 0.842 [0.776–0.888] (mean 0.813 ± 0.109, n=187)
+- **U-Net**: median = 0.731, mean = 0.690 ± 0.157 (n=187)
+- **SegResNet**: median = 0.842, mean = 0.813 ± 0.109 (n=187)
+
+**Mean-DSC paired comparison (n=187)**: median Δ = +0.100, p < 0.001 (Wilcoxon), r = 0.865 (**large**)
