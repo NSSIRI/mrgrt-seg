@@ -63,22 +63,59 @@ class SegGradCAM3D:
         except Exception:
             pass
 
-    def compute(self, x, target_class, patch_size=None):
+    def compute(self, x, target_class, patch_size=None, oom_fallback_cpu=True):
         """Alias pour __call__ qui retourne le 1er sample en numpy/tensor 3D.
 
         Si l'input est un volume entier (B=1, C=1, D, H, W), le tensor cam
         retourne par __call__ a shape (1, D, H, W). On retourne le [0] = (D, H, W).
+
+        Si CUDA OOM (volume trop grosse pour backward sur GPU) et que
+        `oom_fallback_cpu=True`, basculer le modele et l'input sur CPU
+        pour ce patient. Le calcul est plus lent mais ne plante pas.
         """
-        cam = self(x, target_class)  # tensor (B, D, H, W) ou (1, D, H, W)
+        try:
+            cam = self(x, target_class)
+        except torch.cuda.OutOfMemoryError:
+            if not oom_fallback_cpu:
+                raise
+            print("    [OOM] bascule CPU pour ce patient...")
+            torch.cuda.empty_cache()
+            # Sauve l'etat actuel, bascule modele + input sur CPU, recalcule
+            orig_device = next(self.model.parameters()).device
+            self.model.to("cpu")
+            x_cpu = x.to("cpu")
+            try:
+                cam = self(x_cpu, target_class)
+            finally:
+                # Restaure le modele sur GPU pour les patients suivants
+                self.model.to(orig_device)
+                torch.cuda.empty_cache()
         if cam.dim() == 4 and cam.shape[0] == 1:
             cam = cam[0]
         return cam
 
     @torch.enable_grad()
-    def __call__(self, x, target_class, mask_subset=None, normalize=True):
-        x = x.requires_grad_(False).clone()
+    def __call__(self, x, target_class, mask_subset=None, normalize=True,
+                 divisor=16):
+        """SEG-GRAD-CAM 3D.
+
+        FIX 2026-05 : padde l'input a un multiple de `divisor` (16 par defaut
+        pour SegResNet/UNet 4 niveaux) pour eviter les size mismatches dans
+        le decodeur quand les dims du volume ne sont pas alignes. La heatmap
+        est croppee aux dims d'origine en sortie.
+        """
+        # 1) Padding a un multiple de divisor pour eviter dim mismatch dans decoder
+        orig_shape = x.shape[2:]  # (D, H, W)
+        pad_per_dim = []
+        for s in orig_shape[::-1]:  # F.pad attend l'ordre inverse (W, H, D)
+            rem = s % divisor
+            extra = (divisor - rem) if rem != 0 else 0
+            pad_per_dim.extend([0, extra])
+        x_pad = F.pad(x, pad_per_dim, mode="constant", value=0.0)
+
+        x_pad = x_pad.requires_grad_(False).clone()
         self.model.zero_grad(set_to_none=True)
-        logits = self.model(x)
+        logits = self.model(x_pad)
         if mask_subset is None:
             preds = logits.argmax(dim=1, keepdim=True)
             mask_subset = (preds == target_class).float()
@@ -88,8 +125,12 @@ class SegGradCAM3D:
         acts = self._activations
         weights = grads.mean(dim=(2, 3, 4), keepdim=True)
         cam = F.relu((weights * acts).sum(dim=1, keepdim=True))
-        cam = F.interpolate(cam, size=x.shape[2:], mode="trilinear",
+        # Interpoler a la shape PADDEE puis cropper aux dims d'origine
+        cam = F.interpolate(cam, size=x_pad.shape[2:], mode="trilinear",
                             align_corners=False).squeeze(1)
+        # Crop aux dims d'origine (D, H, W)
+        cam = cam[..., :orig_shape[0], :orig_shape[1], :orig_shape[2]]
+
         if normalize:
             B = cam.shape[0]
             flat = cam.view(B, -1)
@@ -97,9 +138,9 @@ class SegGradCAM3D:
             maxs = flat.max(dim=1, keepdim=True).values
             cam = (flat - mins) / (maxs - mins + 1e-8)
             if B == 1:
-                cam = cam.view(*x.shape[2:]).unsqueeze(0)
+                cam = cam.view(*orig_shape).unsqueeze(0)
             else:
-                cam = cam.view(B, *x.shape[2:])
+                cam = cam.view(B, *orig_shape)
         return cam
 
 
