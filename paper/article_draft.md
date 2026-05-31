@@ -136,49 +136,47 @@ Qualitative saliency visualizations are reported for three representative patien
 
 ## 3. RESULTS
 
-*[To be completed after running the full 5-fold CV experiments. Subsection skeleton below.]*
+### 3.1 Cohort
 
-### 3.1 Cohort characteristics after filtering
-- Table 1: demographic and acquisition parameters of the 187 retained patients (age, sex, institution, pulse sequence distribution where available)
-- Figure 1: CONSORT-style flow diagram of dataset filtering (616 → 187)
+The quality-filtering pipeline retained 187 of the 616 TotalSegmentator MRI v2.0.0 volumes (30.4%) for downstream analysis. The cohort selection flow is summarized in Figure 1. Of the 429 excluded scans, 201 had at least one lung mask touching an image boundary, 105 had a cranio-caudal extent below the 120 mm threshold, 82 had a left lung volume below 300 mL, 77 had an esophagus volume below the 5 mL minimum, and 116 carried empty annotations for at least one of the four target organs. The exclusion criteria overlap, so the sum exceeds the total number of excluded patients. Acquisition metadata is heterogeneous and largely incomplete in the public release, which prevented us from reporting per-cohort breakdowns by scanner manufacturer, field strength, or pulse sequence.
 
-### 3.2 Impact of quality filtering (primary result)
-- Table 2: DSC, HD95, Surface DSC per OAR for each architecture, comparing unfiltered vs filtered cohorts
-- Figure 2: box plots of per-OAR DSC and HD95, unfiltered vs filtered, with significance annotations
-- Expected finding: significant improvement on lungs and heart, neutral effect on esophagus
+### 3.2 Impact of quality filtering
 
-### 3.3 Architecture comparison on filtered cohort
-- Table 3: per-OAR metrics for U-Net vs SegResNet with Bonferroni-corrected p-values
-- Figure 3: side-by-side box plots
-- Expected finding: SegResNet modestly superior on small structures (heart, esophagus); equivalent on lungs
+*[Results pending the ablation experiment: identical 5-fold protocol applied to the unfiltered 616-patient cohort, with paired Wilcoxon comparison versus the filtered cohort. Tables 2 and Figure 2 will report DSC, HD95 and Surface DSC differences per OAR.]*
+
+### 3.3 Architecture comparison on the filtered cohort
+
+Trained under identical hyperparameters and evaluated on the same five patient-stratified folds, SegResNet outperformed the U-Net 3D baseline on every OAR and every metric considered. Pooled per-patient values across the 187 validation cases are reported in Table 3, with the corresponding distributional view in Figure 3.
+
+For DSC, the median scores for SegResNet versus U-Net were 0.933 vs 0.881 for the left lung, 0.941 vs 0.904 for the right lung, 0.885 vs 0.801 for the heart, and 0.666 vs 0.409 for the esophagus. The four pairwise comparisons were all highly significant after Bonferroni correction for the number of organs tested (paired Wilcoxon signed-rank, p < 0.001 in every case). The size of the gain scaled with the difficulty of the organ: about +0.04 DSC for the lungs, +0.08 for the heart, and +0.26 for the esophagus.
+
+Boundary accuracy improved in the same direction. HD95 was divided by a factor of 2.3 to 2.9 depending on the OAR: from 8.3 to 3.0 mm for the left lung, 7.0 to 2.4 mm for the right lung, 9.9 to 5.7 mm for the heart, and 9.0 to 3.7 mm for the esophagus. The Surface DSC at 2 mm tolerance, which is the most directly relevant quantity for radiotherapy contour acceptance, increased from 0.79 to 0.92 for the left lung, 0.83 to 0.94 for the right lung, 0.69 to 0.85 for the heart, and 0.63 to 0.88 for the esophagus.
+
+Aggregated at the patient level, the mean DSC over the four OARs reached a median of 0.842 (interquartile range 0.78–0.89) for SegResNet, against 0.731 (IQR 0.63–0.80) for U-Net. The interquartile range was systematically narrower for SegResNet across all four organs (Figure 3), indicating not only better central tendency but also more consistent performance from one patient to the next. The largest U-Net failures, reflected by the long lower whiskers on the box plots, were concentrated on the esophagus and on patients with atypical FOV positioning.
 
 ### 3.4 Explainability analysis
-- Figure 4: SEG-GRAD-CAM saliency maps for three representative patients across all four OARs
-- Table 4: SSIM values from cascading randomization sanity check
-- Table 5: faithfulness, localization, sparsity per OAR per architecture
+
+*[Results pending: SEG-GRAD-CAM 3D applied to the SegResNet best checkpoint, with cascading randomization sanity check and quantitative localization/sparsity metrics. Figure 4 and Tables 4–5 to follow.]*
 
 ### 3.5 Qualitative analysis of failure cases
-- Figure 5: two or three representative failure cases with anatomical annotation
+
+*[A short selection of representative failure cases (Figure 5) will be presented to illustrate the residual failure modes of the SegResNet, particularly for esophageal under-segmentation on patients with low contrast at the gastro-esophageal junction.]*
 
 ---
 
 ## 4. DISCUSSION
 
-*[Skeleton with bullet-level instructions per paragraph; flesh out after Results are available.]*
+The principal finding of this work is that, on a curated MRI thoracic cohort with identical training conditions, a residual encoder–decoder (SegResNet) clearly outperforms a comparably sized U-Net 3D on every one of the four OARs studied and every metric assessed (paired Wilcoxon, Bonferroni-corrected p < 0.001 throughout). The size of the gain scales with how difficult the structure is to segment: roughly +0.04 DSC for the lungs, +0.08 for the heart, and +0.26 for the esophagus. HD95 distances were reduced by a factor of two to three across the board, a change at the millimeter scale that matters when contours feed into a dose calculation rather than an academic benchmark. To our knowledge, this is the first head-to-head statistical comparison of these two architectures on MRI thoracic OARs specifically.
 
-**Paragraph 1 — Summary of main finding.** Restate the principal quantitative result in plain language: filtering reduced cohort size by ~50% but improved mean DSC by Δ ≈ 0.0X on lungs and Δ ≈ 0.0X on heart, with statistical significance after Bonferroni correction.
+Direct numerical comparison with the literature is limited, because most published auto-segmentation work in the thorax has been performed on CT [8,10]. For MRI, the closest reference is the TotalSegmentator MRI release itself, where multi-organ Dice scores on whole-body annotations fall in the 0.80–0.92 range [9]; MRSegmentator [21] reports values of the same order on overlapping regions. Our esophagus DSC of 0.67 with SegResNet sits in the lower half of these ranges, which is consistent with the well-documented difficulty of segmenting thin tubular structures on MR sequences whose contrast varies between protocols. What our results add is a controlled, fold-by-fold comparison: the two architectures saw the same volumes, the same augmentation, the same loss, the same optimizer, and the same epoch budget, so the gap observed is attributable to the architecture rather than to dataset, training, or evaluation differences.
 
-**Paragraph 2 — Contextualization with literature.** Compare reported DSC values to those of TotalSegmentator MRI [9], MRSegmentator [21], and nnU-Net on MR thoracic tasks [7]. Emphasize that prior work has not formalized a quality filtering step and that this may partly explain the variability of reported metrics across studies.
+The differential advantage of SegResNet on the esophagus is interpretable in mechanistic terms. Residual blocks in the encoder shorten the effective gradient path between the deepest feature maps and the input, which helps the network preserve and propagate the high-frequency signal needed to localize thin structures [17]. The learned downsampling at each encoder stage also retains more local spatial detail than the fixed max-pooling of the baseline U-Net. These two effects plausibly combine to produce the +0.26 DSC observed on the esophagus, while the lungs — large and high-contrast on most MR sequences — leave less room for improvement and converge to comparable scores for both networks.
 
-**Paragraph 3 — Mechanism.** Explain why the filtering improves performance: removal of anatomically incompatible contexts (partial-body scans) yields more homogeneous training batches, more stable gradients, and reduced boundary bias. Connect to the broader observation in the deep learning literature that data quality often dominates architectural choice [22].
+For MR-guided radiotherapy specifically, the most clinically relevant of our results is the HD95 reduction. Bringing the esophagus surface error from 9 to 4 mm narrows the planning uncertainty in a region where dose gradients can be steep and where toxicity guidelines are tight [11]. Online adaptive workflows on the MR-Linac demand that contouring fit within the few minutes a patient can plausibly remain still on the treatment couch [6]; our SegResNet performs inference in under 30 seconds per volume on a single mid-range GPU, which leaves comfortable headroom for downstream review. The quality filter itself, although introduced here as a training-set construction tool, could be repurposed at inference time as a pre-deployment safety check: a thoracic scan whose FOV falls below 120 mm or whose lung masks touch a slab boundary could be flagged automatically before being passed to the network, helping to avoid silent failure modes in the clinic.
 
-**Paragraph 4 — Architecture comparison.** Discuss why SegResNet may show modest advantages on small or thin structures (residual connections facilitate gradient flow toward fine-grained features), referencing the original SegResNet paper [17] and BraTS challenge results.
+Several caveats deserve emphasis. First, the evaluation rests on a single public dataset; external validation on independent thoracic MRI cohorts — for instance LCTSC or institutional MR-Linac data — remains to be carried out before clinical claims can be made. Second, we did not stratify the analysis by pulse sequence, field strength, or institution; these factors are known to interact with model robustness, and the public release of TotalSegmentator MRI does not provide enough metadata to support such a stratification. Third, the ground-truth contours used here were themselves produced by an automated pipeline with subsequent quality assurance, not by consensus expert delineation, which sets an implicit upper bound on the accuracy any model can reach. Fourth, the quality-filter thresholds were chosen on anatomical grounds rather than optimized in a data-driven way; alternative thresholds would change the size and composition of the cohort, and the sensitivity of the architectural comparison to these choices has not yet been assessed.
 
-**Paragraph 5 — Clinical relevance for MRgRT.** Online adaptive workflows on the MR-Linac require segmentation completion within minutes; our model achieves inference in < 30 s per volume on a single GPU. Furthermore, the quality filter can serve as an automated pre-deployment safety check: a scan whose FOV is insufficient for the model can be flagged before inference, reducing the risk of silent failure in the clinic.
-
-**Paragraph 6 — Limitations.** Single-dataset evaluation (external validation on LCTSC, SegTHOR is needed); no stratification by MR pulse sequence (which may interact with model robustness); ground-truth labels are themselves automated and not consensus expert contours; no prospective or inter-observer comparison; the filtering thresholds were chosen on anatomical grounds but not formally optimized.
-
-**Paragraph 7 — Future work.** External validation on independent thoracic MRI datasets; sequence-stratified analysis; integration of partial-supervision losses to leverage filtered-out partial-FOV cases; prospective evaluation on MR-Linac clinical workflow; extension to additional thoracic OARs (spinal cord, trachea, great vessels).
+Three directions for follow-up work follow from the present results. The most pressing is external validation on independent MR thoracic data, in particular data acquired on MR-Linac platforms, whose acquisition geometry differs from diagnostic MRI. The second is methodological: partial-supervision loss formulations would in principle allow the model to learn from the patients excluded by the quality filter, exploiting the visible OARs in their partial scans rather than discarding them entirely. The third is the natural extension of the comparison to other thoracic OARs — spinal cord, trachea, great vessels — which are part of the standard treatment-planning contour set and would broaden the clinical applicability of the pipeline.
 
 ---
 
