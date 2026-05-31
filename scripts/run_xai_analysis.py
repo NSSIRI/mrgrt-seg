@@ -174,7 +174,7 @@ def main():
             try:
                 heat = cam.compute(x, target_class=c, patch_size=tuple(patch_size))
                 if isinstance(heat, torch.Tensor):
-                    heat = heat.cpu().numpy()
+                    heat = heat.detach().cpu().numpy()
                 # Libere memoire GPU apres chaque forward+backward
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
@@ -236,7 +236,7 @@ def main():
             local_cam = SegGradCAM3D(m, target_layer="auto")
             try:
                 h = local_cam.compute(x_test, target_class=target_c, patch_size=tuple(patch_size))
-                arr = h.cpu().numpy() if isinstance(h, torch.Tensor) else h
+                arr = h.detach().cpu().numpy() if isinstance(h, torch.Tensor) else h
             finally:
                 local_cam.cleanup()
                 if torch.cuda.is_available():

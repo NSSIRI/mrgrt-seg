@@ -92,7 +92,7 @@ class SegGradCAM3D:
                 torch.cuda.empty_cache()
         if cam.dim() == 4 and cam.shape[0] == 1:
             cam = cam[0]
-        return cam
+        return cam.detach()  # detache du graphe d'autograd pour conversion numpy
 
     @torch.enable_grad()
     def __call__(self, x, target_class, mask_subset=None, normalize=True,
