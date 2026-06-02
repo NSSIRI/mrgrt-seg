@@ -241,7 +241,9 @@ def main():
     work_model = copy.deepcopy(pristine_model)
     work_model.eval()
     layers = list_conv_layers(work_model)[::-1]  # output -> input
-    gen = torch.Generator(device="cpu").manual_seed(args.seed)
+
+    # MODIFICATION EFFECTUÉE ICI : Le générateur de graines s'aligne sur la variable device
+    gen = torch.Generator(device=device).manual_seed(args.seed)
 
     for i, (name, layer) in enumerate(layers, start=1):
         randomize_layer(layer, generator=gen)
