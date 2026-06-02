@@ -1,0 +1,14 @@
+{
+  "id": "abdelhalimnssiri/mrgrt-train-segresnet-fold0",
+  "title": "MRgRT train SegResNet fold0",
+  "code_file": "train_segresnet_fold0.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": ["abdelhalimnssiri/mrgrt-oar-thorax-clean-v2"],
+  "competition_sources": [],
+  "kernel_sources": []
+}

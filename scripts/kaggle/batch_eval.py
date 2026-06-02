@@ -27,6 +27,9 @@ GITHUB_BRANCH = "main"
 MODEL = "unet"       # "unet" ou "segresnet" — change selon le compte
 FOLDS = [0, 1, 2, 3, 4]   # evalue les 5 folds. Reduire si certains deja faits.
 CONFIG = "configs/default.yaml"
+# Si Kaggle alloue un GPU P100 (sm_60) incompatible avec PyTorch 2.10+cu128,
+# force CPU. Sinon laisse "auto" pour utiliser GPU si compatible.
+DEVICE_OVERRIDE = "auto"   # "auto", "cuda", ou "cpu"
 
 # Dataset (auto-detect entre 2 paths possibles)
 KAGGLE_INPUT_CANDIDATES = [
@@ -67,6 +70,18 @@ import torch
 print(f"   torch={torch.__version__} | CUDA={torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"   GPU : {torch.cuda.get_device_name(0)}")
+    # Auto-detect GPU incompatibility (P100 sm_60 vs PyTorch sm_70+)
+    gpu_name = torch.cuda.get_device_name(0)
+    if "P100" in gpu_name and DEVICE_OVERRIDE == "auto":
+        print(f"   [warn] P100 detecte, incompatible avec PyTorch 2.10+cu128 -> bascule sur CPU")
+        DEVICE_OVERRIDE = "cpu"
+
+# Resoudre device final
+if DEVICE_OVERRIDE == "auto":
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+else:
+    DEVICE = DEVICE_OVERRIDE
+print(f"   Device final : {DEVICE}")
 
 # 3) Auto-detect dataset
 print(f"\n[3] Dataset")
@@ -135,7 +150,7 @@ for fold, ckpt in ckpts.items():
            "--model", MODEL, "--fold", str(fold), "--config", CONFIG,
            "--ckpt", str(ckpt),
            "--image_filename", img_fn, "--label_filename", lbl_fn,
-           "--device", "cuda" if torch.cuda.is_available() else "cpu",
+           "--device", DEVICE,
            "--out", out_csv]
     sys.stdout.flush()
     ret = subprocess.run(cmd, cwd=REPO_DIR, check=False)

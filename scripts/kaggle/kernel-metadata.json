@@ -1,0 +1,16 @@
+{
+  "id": "abdelhalimnssiri/mrgrt-train-unet-fold0",
+  "title": "MRgRT train UNet fold0",
+  "code_file": "train_kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "abdelhalimnssiri/mrgrt-oar-thorax-clean"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
