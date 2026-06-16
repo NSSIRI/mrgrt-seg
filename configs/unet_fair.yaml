@@ -1,0 +1,76 @@
+# Configuration "U-Net équitable" — capacité alignée sur SegResNet (~18.8 M params)
+# Identique à default.yaml SAUF model.features (canaux élargis).
+# Le U-Net reste PLAIN (num_res_units=0 dans factory.py) : on isole l'effet
+# architecture (plain vs résiduel) à capacité égale.
+#
+# Vérif params (à lancer sur Kaggle/MARWAN où MONAI est installé) :
+#   from src.models.factory import build_model, count_parameters
+#   m = build_model("unet", 1, 5, features=(48,96,192,384,832))
+#   print(f"{count_parameters(m):,}")   # attendu ~18.80 M
+experiment:
+  name: "unet_fair_vs_segresnet"
+  seed: 42
+  output_dir: "runs/"
+
+data:
+  root: "data/"
+  image_filename: "image.nii"
+  label_filename: "label.nii"
+  num_classes: 5
+  class_names: ["background", "poumon_g", "poumon_d", "coeur", "oesophage"]
+  modality: "mri"
+  spacing: [1.5, 1.5, 3.0]
+  intensity_params:
+    clip_percentiles: [0.5, 99.5]
+  patch_size: [128, 128, 64]
+  cache_rate: 0.5
+
+splits:
+  n_folds: 5
+  shuffle: true
+
+model:
+  name: "unet"
+  in_channels: 1
+  out_channels: 5
+  # === SEUL CHANGEMENT vs default.yaml : canaux élargis (~18.80 M params) ===
+  features: [48, 96, 192, 384, 832]
+  segresnet:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4]
+    blocks_up:   [1, 1, 1]
+    dropout_prob: 0.2
+
+train:
+  epochs: 150
+  batch_size: 2
+  num_workers: 4
+  lr: 1.0e-4
+  weight_decay: 1.0e-5
+  optimizer: "adamw"
+  scheduler: "cosine"
+  warmup_epochs: 5
+  amp: true
+  grad_clip: 1.0
+  early_stopping_patience: 30
+  val_interval: 1
+  loss:
+    name: "dice_ce"          # garder IDENTIQUE à SegResNet pour l'équité
+    dice_weight: 1.0
+    ce_weight: 1.0
+    include_background: false
+
+eval:
+  metrics: ["dsc", "iou", "hd95"]
+  surface_dsc_tolerance_mm: 2.0
+  sliding_window_overlap: 0.5
+  test_time_augmentation: false
+
+logging:
+  use_wandb: false
+  project: "mrgrt-seg"
+
+xai:
+  target_layer: "auto"
+  metrics: ["in_organ_ratio", "pointing_accuracy", "spatial_entropy"]
+  sanity_checks: true
