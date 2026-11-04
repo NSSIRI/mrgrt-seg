@@ -115,22 +115,31 @@ if LABELS_6OAR:
         if not cands:
             raise RuntimeError(f"dataset de labels 6 OAR non monte : {LABELS_6OAR}")
         root6 = cands[0]
-    # fichiers a plat dans le dataset : PATIENT_sXXXX_label.nii.gz
-    src_lab = sorted(root6.rglob("PATIENT_s*_label.nii.gz"))
+    # fichiers a plat dans le dataset : PATIENT_sXXXX_label.nii.gz, que Kaggle peut decompresser en .nii
+    src_lab = sorted(set(root6.rglob("PATIENT_s*_label.nii.gz")) | set(root6.rglob("PATIENT_s*_label.nii")))
     if not src_lab:
         raise RuntimeError(f"aucun label 6 OAR sous {root6}")
     data6 = REPO_DIR / "data6"
     data6.mkdir(exist_ok=True)
+    import gzip
     for lab in src_lab:
-        pid = lab.name.replace("_label.nii.gz", "")
+        pid = lab.name.split("_label.nii")[0]
         img = Path(KAGGLE_INPUT_DATASET) / pid / "image.nii"
         hi, hl = nib.load(str(img)), nib.load(str(lab))
         if hi.shape[:3] != hl.shape[:3] or not np.allclose(hi.affine, hl.affine, atol=1e-3):
             raise RuntimeError(f"{pid} : grille du label 6 OAR differente de l'image")
         (data6 / pid).mkdir(exist_ok=True)
-        for name, target in (("image.nii", img), ("label.nii.gz", lab)):
-            if not (data6 / pid / name).exists():
-                (data6 / pid / name).symlink_to(target)
+        if not (data6 / pid / "image.nii").exists():
+            (data6 / pid / "image.nii").symlink_to(img)
+        dst = data6 / pid / "label.nii.gz"            # nom attendu par configs/phase4 (label_filename)
+        if not dst.exists():
+            if lab.name.endswith(".gz"):
+                dst.symlink_to(lab)
+            else:                                     # label decompresse par Kaggle : recompresse localement
+                with open(lab, "rb") as fi, gzip.open(dst, "wb", compresslevel=1) as fo:
+                    fo.write(fi.read())
+    if len({p.name for p in data6.iterdir() if p.is_dir()}) != 115:
+        raise RuntimeError("data6 : nombre de patients different de 115")
     print(f"   data6 : {len(src_lab)} patients (labels 6 OAR, grilles verifiees)")
 
 
