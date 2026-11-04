@@ -48,7 +48,7 @@ QUOTA_H = 30.0     # heures GPU / semaine / compte (a verifier sur la page du co
 VARIANTS = {   # variante -> (modele, config, heures estimees par run : entrainement + evaluation)
     "unet_opt": ("unet", "configs/ablation/e3_unet_opt.yaml", 3.14 + 0.15),    # mesure etape 0
     "segresnet": ("segresnet", "configs/ablation/e2_segresnet.yaml", 6.59 + 0.20),
-    "unet_res": ("unet", "configs/ablation/unet_res.yaml", 11.7 + 0.15),       # smoke : 331 s a l'epoque 1 -> 2 sessions
+    "unet_res": ("unet", "configs/ablation/unet_res.yaml", 3.9 + 0.2),         # mesure pli 0 (le smoke de 331 s/epoque etait trompeur)
     "unet_gn": ("unet", "configs/ablation/unet_gn.yaml", 3.14 + 0.15),         # suppose = E3
     "segresnet_in": ("segresnet", "configs/ablation/segresnet_in.yaml", 6.59 + 0.20),  # suppose = E2
 }
@@ -75,11 +75,11 @@ def standard_plan() -> list[dict]:
         for k in range(5):
             if v in SPLIT_VARIANTS:   # trop long pour une session : arret a MAX_TRAIN_HOURS puis reprise
                 jobs.append({"job": f"{v}-s42-f{k}-p1", "bloc": "B", "variante": v, "graine": 42, "pli": k,
-                             "epoques": 150, "heures_estimees": 10.8,
-                             "remarque": "partie 1 : arret propre a 10,5 h (last.pt)"})
+                             "epoques": 150, "heures_estimees": 4.1,
+                             "remarque": "mesure pli 0 : 79 s/epoque, 3,9 h -> une seule session suffit"})
                 jobs.append({"job": f"{v}-s42-f{k}-p2", "bloc": "B", "variante": v, "graine": 42, "pli": k,
-                             "epoques": 150, "heures_estimees": 2.0,
-                             "remarque": "partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"})
+                             "epoques": 150, "heures_estimees": 0.0,
+                             "remarque": "a lancer SEULEMENT si p1 a ecrit runs/A_REPRENDRE (non necessaire au pli 0)"})
             else:
                 jobs.append({"job": f"{v}-s42-f{k}", "bloc": "B", "variante": v, "graine": 42, "pli": k,
                              "epoques": 150})
