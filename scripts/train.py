@@ -8,7 +8,9 @@ Exemples :
 """
 from __future__ import annotations
 import argparse
+import json
 import random
+import subprocess
 from pathlib import Path
 import sys
 
@@ -32,6 +34,55 @@ def set_seed(seed):
     torch.manual_seed(seed); torch.cuda.manual_seed_all(seed)
 
 
+def resolve_seeds(cfg, cli_seed=None):
+    """(graine d'entrainement, graine des plis).
+
+    Sans --seed ni splits.seed : les deux valent experiment.seed (comportement
+    historique, commit 05d473e). --seed ne change jamais les plis.
+    """
+    exp_seed = cfg["experiment"]["seed"]
+    train_seed = cli_seed if cli_seed is not None else exp_seed
+    split_seed = cfg["splits"].get("seed", exp_seed)
+    return train_seed, split_seed
+
+
+def _git_commit():
+    try:
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                              capture_output=True, text=True,
+                              timeout=10).stdout.strip() or None
+    except Exception:
+        return None
+
+
+def _write_run_meta(output_dir, args, cfg, train_seed, split_seed, val_items,
+                    n_params):
+    """Ecrit run_meta.json (a cote de best.pt) : de quoi reconstruire le modele."""
+    import monai
+    output_dir.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "tag": args.tag or args.model,
+        "model": args.model,
+        "config": str(args.config),
+        "fold": args.fold,
+        "train_seed": train_seed,
+        "split_seed": split_seed,
+        "epochs": cfg["train"]["epochs"],
+        "in_channels": cfg["model"]["in_channels"],
+        "out_channels": cfg["model"]["out_channels"],
+        "features": list(cfg["model"]["features"]),
+        "segresnet_kwargs": cfg["model"].get("segresnet"),
+        "unet_kwargs": cfg["model"].get("unet"),
+        "n_params": n_params,
+        "val_patients": [it["patient_id"] for it in val_items],
+        "git_commit": _git_commit(),
+        "monai_version": monai.__version__,
+        "torch_version": torch.__version__,
+    }
+    (output_dir / "run_meta.json").write_text(
+        json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", choices=["unet", "segresnet"], required=True)
@@ -49,6 +100,15 @@ def main():
         help=("Override cfg.train.epochs. Utile pour un sanity-run rapide "
               "(--epochs 5) sans toucher au YAML."),
     )
+    parser.add_argument(
+        "--seed", type=int, default=None,
+        help=("Graine d'entrainement (set_seed). Par defaut : experiment.seed. "
+              "N'affecte PAS les plis (splits.seed, sinon experiment.seed)."),
+    )
+    parser.add_argument(
+        "--tag", default=None,
+        help="Nom du run : sorties dans <output_dir>/<tag>_fold<k> (defaut : <model>).",
+    )
     args = parser.parse_args()
 
     cfg = yaml.safe_load(Path(args.config).read_text())
@@ -57,13 +117,15 @@ def main():
     if args.epochs is not None:
         print(f"Override : epochs {cfg['train']['epochs']} -> {args.epochs}")
         cfg["train"]["epochs"] = args.epochs
-    set_seed(cfg["experiment"]["seed"])
+    train_seed, split_seed = resolve_seeds(cfg, args.seed)
+    print(f"Graine entrainement : {train_seed} | graine des plis : {split_seed}")
+    set_seed(train_seed)
 
     items = list_patients(cfg["data"]["root"],
                           cfg["data"]["image_filename"],
                           cfg["data"]["label_filename"])
     folds = make_5fold_splits(items, n_folds=cfg["splits"]["n_folds"],
-                              seed=cfg["experiment"]["seed"])
+                              seed=split_seed)
     train_items, val_items = load_fold(folds, args.fold, items)
     print(f"Fold {args.fold} : train={len(train_items)} | val={len(val_items)}")
 
@@ -98,6 +160,7 @@ def main():
         out_channels=cfg["model"]["out_channels"],
         features=cfg["model"]["features"],
         segresnet_kwargs=cfg["model"].get("segresnet"),
+        unet_kwargs=cfg["model"].get("unet"),
     )
     print(f"Modele {args.model} | parametres : {count_parameters(model):,}")
 
@@ -116,7 +179,9 @@ def main():
     )
 
     output_dir = Path(cfg["experiment"]["output_dir"]) / \
-        f"{args.model}_fold{args.fold}"
+        f"{args.tag or args.model}_fold{args.fold}"
+    _write_run_meta(output_dir, args, cfg, train_seed, split_seed, val_items,
+                    count_parameters(model))
 
     # Resolution de --resume :
     #   None         -> pas de reprise (run from scratch)
