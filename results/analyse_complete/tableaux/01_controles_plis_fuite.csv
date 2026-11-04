@@ -1,0 +1,8 @@
+controle,plis_disjoints_train_val,val_uniques,val_total,tailles_val,ok,patients
+plis abdelhalimnssiri,True,187.0,187.0,"[38, 38, 37, 37, 37]",,
+plis abdelhalimnssiri_20260930_1638,True,187.0,187.0,"[38, 38, 37, 37, 37]",,
+plis abdelhalimnssiri_b,True,187.0,187.0,"[38, 38, 37, 37, 37]",,
+plis nssiri02_b,True,187.0,187.0,"[38, 38, 37, 37, 37]",,
+E1_UNet_base : pli de chaque patient = splits.json,,,,,True,187.0
+E3_UNet_opt : pli de chaque patient = splits.json,,,,,True,187.0
+E2_SegResNet : pli de chaque patient = splits.json,,,,,True,187.0
