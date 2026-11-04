@@ -3,31 +3,31 @@ ctrl-e3-f0,controle,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,42,0,0,abdel
 smoke-1ep,controle,unet_res+unet_gn+segresnet_in,,,42,0,1,nssiri02,nssiri02/abl18m-smoke-1ep,0.6,1,complete,2026-11-04 15:22,2026-11-04 15:39,"1 epoque A1, A2, A3 a la suite : memoire GPU, temps par epoque ; pas d'evaluation"
 unet_res-s42-f0-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,0,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-res-s42-f0-p1,10.8,1,running,2026-11-04 16:41,,"partie 1 : arret propre a 10,5 h (last.pt)"
 unet_res-s42-f0-p2,B,unet_res,unet,configs/ablation/unet_res.yaml,42,0,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-res-s42-f0-p2,2.0,1,a_lancer,,,"partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"
-unet_res-s42-f1-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,1,150,nssiri02,nssiri02/abl18m-unet-res-s42-f1-p1,10.8,1,a_lancer,,,"partie 1 : arret propre a 10,5 h (last.pt)"
+unet_res-s42-f1-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,1,150,nssiri02,nssiri02/abl18m-unet-res-s42-f1-p1,10.8,1,running,2026-11-04 19:02,,"partie 1 : arret propre a 10,5 h (last.pt)"
 unet_res-s42-f1-p2,B,unet_res,unet,configs/ablation/unet_res.yaml,42,1,150,nssiri02,nssiri02/abl18m-unet-res-s42-f1-p2,2.0,1,a_lancer,,,"partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"
-unet_res-s42-f2-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,2,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-res-s42-f2-p1,10.8,2,a_lancer,,,"partie 1 : arret propre a 10,5 h (last.pt)"
-unet_res-s42-f2-p2,B,unet_res,unet,configs/ablation/unet_res.yaml,42,2,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-res-s42-f2-p2,2.0,2,a_lancer,,,"partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"
-unet_res-s42-f3-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,3,150,nssiri02,nssiri02/abl18m-unet-res-s42-f3-p1,10.8,2,a_lancer,,,"partie 1 : arret propre a 10,5 h (last.pt)"
-unet_res-s42-f3-p2,B,unet_res,unet,configs/ablation/unet_res.yaml,42,3,150,nssiri02,nssiri02/abl18m-unet-res-s42-f3-p2,2.0,2,a_lancer,,,"partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"
-unet_res-s42-f4-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,4,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-res-s42-f4-p1,10.8,3,a_lancer,,,"partie 1 : arret propre a 10,5 h (last.pt)"
-unet_res-s42-f4-p2,B,unet_res,unet,configs/ablation/unet_res.yaml,42,4,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-res-s42-f4-p2,2.0,3,a_lancer,,,"partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"
+unet_res-s42-f2-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,2,150,nasri022026,nasri022026/abl18m-unet-res-s42-f2-p1,10.8,2,a_lancer,,,"partie 1 : arret propre a 10,5 h (last.pt)"
+unet_res-s42-f2-p2,B,unet_res,unet,configs/ablation/unet_res.yaml,42,2,150,nasri022026,nasri022026/abl18m-unet-res-s42-f2-p2,2.0,2,a_lancer,,,"partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"
+unet_res-s42-f3-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,3,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-res-s42-f3-p1,10.8,2,a_lancer,,,"partie 1 : arret propre a 10,5 h (last.pt)"
+unet_res-s42-f3-p2,B,unet_res,unet,configs/ablation/unet_res.yaml,42,3,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-res-s42-f3-p2,2.0,2,a_lancer,,,"partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"
+unet_res-s42-f4-p1,B,unet_res,unet,configs/ablation/unet_res.yaml,42,4,150,nssiri02,nssiri02/abl18m-unet-res-s42-f4-p1,10.8,2,a_lancer,,,"partie 1 : arret propre a 10,5 h (last.pt)"
+unet_res-s42-f4-p2,B,unet_res,unet,configs/ablation/unet_res.yaml,42,4,150,nssiri02,nssiri02/abl18m-unet-res-s42-f4-p2,2.0,2,a_lancer,,,"partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"
 unet_gn-s42-f0,B,unet_gn,unet,configs/ablation/unet_gn.yaml,42,0,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-gn-s42-f0,3.29,1,running,2026-11-04 16:41,,
-unet_gn-s42-f1,B,unet_gn,unet,configs/ablation/unet_gn.yaml,42,1,150,nssiri02,nssiri02/abl18m-unet-gn-s42-f1,3.29,1,a_lancer,,,
+unet_gn-s42-f1,B,unet_gn,unet,configs/ablation/unet_gn.yaml,42,1,150,nasri022026,nasri022026/abl18m-unet-gn-s42-f1,3.29,1,a_lancer,,,
 unet_gn-s42-f2,B,unet_gn,unet,configs/ablation/unet_gn.yaml,42,2,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-gn-s42-f2,3.29,1,a_lancer,,,
-unet_gn-s42-f3,B,unet_gn,unet,configs/ablation/unet_gn.yaml,42,3,150,nssiri02,nssiri02/abl18m-unet-gn-s42-f3,3.29,2,a_lancer,,,
-unet_gn-s42-f4,B,unet_gn,unet,configs/ablation/unet_gn.yaml,42,4,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-gn-s42-f4,3.29,2,a_lancer,,,
+unet_gn-s42-f3,B,unet_gn,unet,configs/ablation/unet_gn.yaml,42,3,150,nssiri02,nssiri02/abl18m-unet-gn-s42-f3,3.29,1,a_lancer,,,
+unet_gn-s42-f4,B,unet_gn,unet,configs/ablation/unet_gn.yaml,42,4,150,nasri022026,nasri022026/abl18m-unet-gn-s42-f4,3.29,2,a_lancer,,,
 segresnet_in-s42-f0,B,segresnet_in,segresnet,configs/ablation/segresnet_in.yaml,42,0,150,nssiri02,nssiri02/abl18m-segresnet-in-s42-f0,6.79,1,running,2026-11-04 16:41,,
-segresnet_in-s42-f1,B,segresnet_in,segresnet,configs/ablation/segresnet_in.yaml,42,1,150,nssiri02,nssiri02/abl18m-segresnet-in-s42-f1,6.79,1,a_lancer,,,
+segresnet_in-s42-f1,B,segresnet_in,segresnet,configs/ablation/segresnet_in.yaml,42,1,150,nasri022026,nasri022026/abl18m-segresnet-in-s42-f1,6.79,1,a_lancer,,,
 segresnet_in-s42-f2,B,segresnet_in,segresnet,configs/ablation/segresnet_in.yaml,42,2,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-segresnet-in-s42-f2,6.79,1,a_lancer,,,
-segresnet_in-s42-f3,B,segresnet_in,segresnet,configs/ablation/segresnet_in.yaml,42,3,150,nssiri02,nssiri02/abl18m-segresnet-in-s42-f3,6.79,2,a_lancer,,,
-segresnet_in-s42-f4,B,segresnet_in,segresnet,configs/ablation/segresnet_in.yaml,42,4,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-segresnet-in-s42-f4,6.79,2,a_lancer,,,
-unet_opt-s123-f0,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,0,150,nssiri02,nssiri02/abl18m-unet-opt-s123-f0,3.29,3,a_lancer,,,
-unet_opt-s123-f1,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,1,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-opt-s123-f1,3.29,3,a_lancer,,,
-unet_opt-s123-f2,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,2,150,nssiri02,nssiri02/abl18m-unet-opt-s123-f2,3.29,3,a_lancer,,,
-unet_opt-s123-f3,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,3,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-opt-s123-f3,3.29,4,a_lancer,,,
+segresnet_in-s42-f3,B,segresnet_in,segresnet,configs/ablation/segresnet_in.yaml,42,3,150,nssiri02,nssiri02/abl18m-segresnet-in-s42-f3,6.79,1,a_lancer,,,
+segresnet_in-s42-f4,B,segresnet_in,segresnet,configs/ablation/segresnet_in.yaml,42,4,150,nasri022026,nasri022026/abl18m-segresnet-in-s42-f4,6.79,2,a_lancer,,,
+unet_opt-s123-f0,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,0,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-opt-s123-f0,3.29,2,a_lancer,,,
+unet_opt-s123-f1,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,1,150,nssiri02,nssiri02/abl18m-unet-opt-s123-f1,3.29,2,a_lancer,,,
+unet_opt-s123-f2,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,2,150,nasri022026,nasri022026/abl18m-unet-opt-s123-f2,3.29,3,a_lancer,,,
+unet_opt-s123-f3,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,3,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-unet-opt-s123-f3,3.29,3,a_lancer,,,
 unet_opt-s123-f4,A,unet_opt,unet,configs/ablation/e3_unet_opt.yaml,123,4,150,nssiri02,nssiri02/abl18m-unet-opt-s123-f4,3.29,3,a_lancer,,,
-segresnet-s123-f0,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,0,150,nssiri02,nssiri02/abl18m-segresnet-s123-f0,6.79,2,a_lancer,,,
-segresnet-s123-f1,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,1,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-segresnet-s123-f1,6.79,3,a_lancer,,,
-segresnet-s123-f2,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,2,150,nssiri02,nssiri02/abl18m-segresnet-s123-f2,6.79,3,a_lancer,,,
-segresnet-s123-f3,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,3,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-segresnet-s123-f3,6.79,3,a_lancer,,,
-segresnet-s123-f4,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,4,150,nssiri02,nssiri02/abl18m-segresnet-s123-f4,6.79,3,a_lancer,,,
+segresnet-s123-f0,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,0,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-segresnet-s123-f0,6.79,2,a_lancer,,,
+segresnet-s123-f1,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,1,150,nssiri02,nssiri02/abl18m-segresnet-s123-f1,6.79,2,a_lancer,,,
+segresnet-s123-f2,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,2,150,nasri022026,nasri022026/abl18m-segresnet-s123-f2,6.79,2,a_lancer,,,
+segresnet-s123-f3,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,3,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-segresnet-s123-f3,6.79,2,a_lancer,,,
+segresnet-s123-f4,A,segresnet,segresnet,configs/ablation/e2_segresnet.yaml,123,4,150,nssiri02,nssiri02/abl18m-segresnet-s123-f4,6.79,2,a_lancer,,,

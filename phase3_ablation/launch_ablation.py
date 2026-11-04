@@ -41,6 +41,7 @@ DATASET_MOUNT = "/kaggle/input/datasets/abdelhalimnssiri/mrgrt-oar-thorax-clean-
 ACCOUNTS = {   # compte -> fichier token (chemin seulement ; le contenu n'est jamais lu ici)
     "abdelhalimnssiri": Path.home() / ".kaggle" / "access_token_compte1",
     "nssiri02": Path.home() / ".kaggle" / "access_token_compte2",
+    "nasri022026": Path.home() / ".kaggle" / "access_token_compte3",   # compte d'un collegue (accord, 04/11/2026)
 }
 QUOTA_H = 30.0     # heures GPU / semaine / compte (a verifier sur la page du compte)
 
@@ -136,6 +137,13 @@ def load_plan() -> list[dict]:
             if o and o["statut"] != "a_lancer":
                 for k in ("compte", "kernel_id", "statut", "date_push", "date_fin", "semaine"):
                     j[k] = o[k]
+    # une partie 2 suit toujours le compte REEL de sa partie 1 (notebook source prive du meme compte)
+    by_id = {j["job"]: j for j in fresh}
+    for j in fresh:
+        p1 = by_id.get(j["job"][:-3] + "-p1") if j["job"].endswith("-p2") else None
+        if p1 and j["statut"] == "a_lancer" and j["compte"] != p1["compte"]:
+            j["compte"] = p1["compte"]
+            j["kernel_id"] = f"{j['compte']}/abl18m-{slug(j['job'])}"
     return fresh
 
 
