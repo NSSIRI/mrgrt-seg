@@ -33,6 +33,7 @@ CELL_TRAIN = HERE / "train_ablation_kaggle.py"
 CELL_EVAL = HERE / "eval_ablation.py"
 RESULTS = ROOT / "results" / "phase3_ablation"
 KAGGLE = r"C:\Users\Lenovo\AppData\Roaming\Python\Python311\Scripts\kaggle.exe"
+PY_KAGGLE = r"C:\Users\Lenovo\AppData\Local\Programs\Python\Python311\python.exe"   # interpreteur ou le paquet kaggle est installe
 
 REPO_COMMIT = "0a36a1e"
 DATASET_SLUG = "abdelhalimnssiri/mrgrt-oar-thorax-clean-v2"
@@ -46,10 +47,11 @@ QUOTA_H = 30.0     # heures GPU / semaine / compte (a verifier sur la page du co
 VARIANTS = {   # variante -> (modele, config, heures estimees par run : entrainement + evaluation)
     "unet_opt": ("unet", "configs/ablation/e3_unet_opt.yaml", 3.14 + 0.15),    # mesure etape 0
     "segresnet": ("segresnet", "configs/ablation/e2_segresnet.yaml", 6.59 + 0.20),
-    "unet_res": ("unet", "configs/ablation/unet_res.yaml", 6.6 + 0.15),        # NON MESURE : borne haute
+    "unet_res": ("unet", "configs/ablation/unet_res.yaml", 11.7 + 0.15),       # smoke : 331 s a l'epoque 1 -> 2 sessions
     "unet_gn": ("unet", "configs/ablation/unet_gn.yaml", 3.14 + 0.15),         # suppose = E3
     "segresnet_in": ("segresnet", "configs/ablation/segresnet_in.yaml", 6.59 + 0.20),  # suppose = E2
 }
+SPLIT_VARIANTS = {"unet_res"}   # entrainement en 2 sessions (reprise depuis last.pt)
 FIELDS = ["job", "bloc", "variante", "modele", "config", "graine", "pli", "epoques", "compte", "kernel_id",
           "heures_estimees", "semaine", "statut", "date_push", "date_fin", "remarque"]
 
@@ -70,7 +72,16 @@ def standard_plan() -> list[dict]:
     ]
     for v in ("unet_res", "unet_gn", "segresnet_in"):                       # bloc B
         for k in range(5):
-            jobs.append({"job": f"{v}-s42-f{k}", "bloc": "B", "variante": v, "graine": 42, "pli": k, "epoques": 150})
+            if v in SPLIT_VARIANTS:   # trop long pour une session : arret a MAX_TRAIN_HOURS puis reprise
+                jobs.append({"job": f"{v}-s42-f{k}-p1", "bloc": "B", "variante": v, "graine": 42, "pli": k,
+                             "epoques": 150, "heures_estimees": 10.8,
+                             "remarque": "partie 1 : arret propre a 10,5 h (last.pt)"})
+                jobs.append({"job": f"{v}-s42-f{k}-p2", "bloc": "B", "variante": v, "graine": 42, "pli": k,
+                             "epoques": 150, "heures_estimees": 2.0,
+                             "remarque": "partie 2 : reprise depuis la sortie de p1 (meme compte), puis evaluation"})
+            else:
+                jobs.append({"job": f"{v}-s42-f{k}", "bloc": "B", "variante": v, "graine": 42, "pli": k,
+                             "epoques": 150})
     for v in ("unet_opt", "segresnet"):                                     # bloc A, graine 123
         for k in range(5):
             jobs.append({"job": f"{v}-s123-f{k}", "bloc": "A", "variante": v, "graine": 123, "pli": k,
@@ -93,10 +104,17 @@ def standard_plan() -> list[dict]:
 def assign(jobs):
     """Repartition gloutonne (plus long d'abord) sur le compte le moins charge ; semaine = remplissage a QUOTA_H."""
     load = {a: 0.0 for a in ACCOUNTS}
+    by_id = {j["job"]: j for j in jobs}
     for j in sorted(jobs, key=lambda j: -float(j["heures_estimees"])):
+        if j["job"].endswith("-p2"):          # place avec sa partie 1 (le notebook source doit etre du meme compte)
+            continue
         if not j.get("compte"):
             j["compte"] = min(load, key=load.get)
         load[j["compte"]] += float(j["heures_estimees"])
+        p2 = by_id.get(j["job"][:-3] + "-p2") if j["job"].endswith("-p1") else None
+        if p2:
+            p2["compte"] = j["compte"]
+            load[j["compte"]] += float(p2["heures_estimees"])
     for a in ACCOUNTS:   # ordre d'execution : controles, bloc B pli par pli, puis bloc A
         order = sorted([j for j in jobs if j["compte"] == a],
                        key=lambda j: ({"controle": 0, "B": 1, "A": 2}[j["bloc"]], int(j["pli"]), j["job"]))
@@ -135,8 +153,9 @@ def setv(code: str, name: str, value: str) -> str:
     return new
 
 
-def train_cell(jobs_list, epochs) -> str:
+def train_cell(jobs_list, epochs, resume=False) -> str:
     c = CELL_TRAIN.read_text(encoding="utf-8")
+    c = setv(c, "RESUME", repr("auto") if resume else "None")
     c = setv(c, "REPO_COMMIT", repr(REPO_COMMIT))
     c = setv(c, "KAGGLE_INPUT_DATASET", repr(DATASET_MOUNT))
     c = setv(c, "EPOCHS", str(epochs))
@@ -151,7 +170,23 @@ def eval_cell(only_folds=None) -> str:
     head = "import os\n" + "".join(f"os.environ[{k!r}] = {v!r}\n" for k, v in env.items())
     if only_folds is not None:
         head += f"os.environ['P2_ONLY_FOLDS'] = {','.join(map(str, only_folds))!r}\n"
-    return head + "\n" + CELL_EVAL.read_text(encoding="utf-8")
+    # evaluation sautee si l'entrainement a ete interrompu (fichier A_REPRENDRE ecrit par la cellule d'entrainement)
+    src = CELL_EVAL.read_text(encoding="utf-8")
+    return (head + "from pathlib import Path as _P\n"
+            "if _P('/kaggle/working/runs/A_REPRENDRE').exists():\n"
+            "    print('Entrainement interrompu : evaluation sautee (reprise necessaire).')\n"
+            "else:\n"
+            f"    exec(compile({src!r}, 'eval_ablation.py', 'exec'))\n")
+
+
+TORCH_PIN = (  # notebook d'evaluation seule : torch 2.10.0 installe avant tout import de torch
+    "import subprocess, sys\n"
+    "assert 'torch' not in sys.modules\n"
+    "subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', 'torch==2.10.0', '--index-url', "
+    "'https://download.pytorch.org/whl/cu128'], check=True)\n"
+    "import torch\n"
+    "assert torch.__version__.startswith('2.10.0'), torch.__version__\n"
+    "print('torch', torch.__version__)\n\n")
 
 
 def build(job: dict) -> Path:
@@ -160,7 +195,7 @@ def build(job: dict) -> Path:
     kernel_sources, cells = [], []
     if job["job"] == "ctrl-e3-f0":
         kernel_sources = ["abdelhalimnssiri/unet-fold-0-opt"]
-        cells = [eval_cell(only_folds=[0]).replace(
+        cells = [TORCH_PIN + eval_cell(only_folds=[0]).replace(
             "os.environ['P2_ONLY_FOLDS']", "os.environ['P2_SKIP_INSTALL'] = '0'\nos.environ['P2_ONLY_FOLDS']", 1)]
     elif job["job"] == "smoke-1ep":
         jl = [{"model": VARIANTS[v][0], "config": VARIANTS[v][1], "fold": 0, "seed": 42, "tag": f"smoke_{v}"}
@@ -170,7 +205,10 @@ def build(job: dict) -> Path:
     else:
         jl = [{"model": job["modele"], "config": job["config"], "fold": int(job["pli"]),
                "seed": int(job["graine"]), "tag": f"{job['variante']}_s{job['graine']}"}]
-        cells = [train_cell(jl, int(job["epoques"])), eval_cell()]
+        is_p2 = job["job"].endswith("-p2")
+        if is_p2:
+            kernel_sources = [job["kernel_id"][:-3] + "-p1"]
+        cells = [train_cell(jl, int(job["epoques"]), resume=is_p2), eval_cell()]
     nb = {"cells": [{"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
                      "source": c.splitlines(keepends=True)} for c in cells],
           "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
@@ -213,6 +251,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--push", action="store_true", help="pousse reellement les jobs de --jobs")
     ap.add_argument("--jobs", default="", help="liste de jobs separes par des virgules (obligatoire avec --push)")
+    ap.add_argument("--repush", action="store_true", help="avec --push : nouvelle version d'un job deja pousse")
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--fetch", action="store_true")
     ap.add_argument("--with-zip", action="store_true", help="avec --fetch : telecharge aussi predictions.zip")
@@ -241,7 +280,7 @@ def main():
                     dest = RESULTS / j["compte"] / j["kernel_id"].split("/", 1)[1]
                     small = r"\.(csv|json|log|txt|yaml|npz)$"
                     for pat in [small] + ([r"predictions\.zip$"] if args.with_zip else []):
-                        subprocess.run([sys.executable, str(ROOT / "phase2_kaggle_eval/17_recuperer_sorties.py"),
+                        subprocess.run([PY_KAGGLE, str(ROOT / "phase2_kaggle_eval/17_recuperer_sorties.py"),
                                         j["kernel_id"], str(dest), pat], env=kenv(j["compte"]))
             elif st in ("running", "queued"):
                 j["statut"] = st
@@ -263,7 +302,7 @@ def main():
               f"semaine {j['semaine']}  statut={j['statut']}")
         if not args.push:
             continue
-        if j["statut"] != "a_lancer":
+        if j["statut"] != "a_lancer" and not args.repush:
             print(f"     deja pousse ({j['statut']}) : ignore")
             continue
         if j["compte"] not in checked:

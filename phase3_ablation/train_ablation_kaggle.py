@@ -5,7 +5,9 @@ Une session :
   1) clone le depot public a la branche ablation-18m, commit fige (REPO_COMMIT) ;
   2) installe monai==1.5.2 (fige) et les dependances de train_kaggle.py ;
   3) relie data/ au dataset Kaggle et runs/ a /kaggle/working/runs ;
-  4) entraine 1 job (ou 2 jobs en parallele, un par GPU, si len(JOBS) == 2) :
+  2b) torch==2.10.0 (cu128) fige : meme version que les entrainements E2/E3 ;
+  4) entraine 1 job (ou 2 jobs en parallele, un par GPU, si len(JOBS) == 2) ; arret propre a MAX_TRAIN_HOURS
+     (fichier runs/A_REPRENDRE, evaluation sautee) et reprise dans une 2e session avec RESUME = "auto" :
        scripts/train.py --model M --fold k --config C --seed S --tag T --epochs E ;
      la memoire GPU est relevee toutes les 30 s (nvidia-smi) dans runs/gpu_mem_<tag>_f<k>.csv ;
   5) la cellule suivante du notebook (phase3_ablation/eval_ablation.py) evalue les plis entraines.
@@ -29,7 +31,13 @@ GITHUB_BRANCH = "ablation-18m"
 REPO_COMMIT = "0a36a1e"
 KAGGLE_INPUT_DATASET = "/kaggle/input/datasets/abdelhalimnssiri/mrgrt-oar-thorax-clean-v2"
 MONAI_VERSION = "1.5.2"
+TORCH_VERSION = "2.10.0"          # = environnement des entrainements E2/E3 (journaux : torch 2.10.0+cu128)
+TORCH_INDEX = "https://download.pytorch.org/whl/cu128"
 EPOCHS = 150
+# Arret propre avant la limite de session Kaggle : last.pt (ecrit a chaque epoque) permet la reprise
+MAX_TRAIN_HOURS = 10.5
+# Reprise : None, ou "auto" = chercher <tag>_fold<k>/last.pt sous /kaggle/input (sortie de la session precedente)
+RESUME = None
 # Liste de jobs : 1 job = protocole standard ; 2 jobs = essai en parallele (1 par GPU, num_workers=2 chacun)
 JOBS = [
     {"model": "unet", "config": "configs/ablation/unet_res.yaml", "fold": 0, "seed": 42, "tag": "unet_res_s42"},
@@ -58,8 +66,11 @@ print(f"   HEAD = {head}")
 if not head.startswith(REPO_COMMIT):
     raise RuntimeError(f"commit attendu {REPO_COMMIT}, obtenu {head}")
 
-# 2) Dependances : MONAI fige (--no-deps : garde le torch de l'image Kaggle)
-print(f"\n[2] monai=={MONAI_VERSION} (fige) + dependances de train_kaggle.py")
+# 2) Dependances : torch et MONAI figes (torch installe AVANT tout import de torch dans ce noyau)
+print(f"\n[2] torch=={TORCH_VERSION} (cu128) + monai=={MONAI_VERSION} (figes) + dependances de train_kaggle.py")
+if "torch" in sys.modules:
+    raise RuntimeError("torch deja importe dans ce noyau : impossible de changer de version")
+run([sys.executable, "-m", "pip", "install", "-q", f"torch=={TORCH_VERSION}", "--index-url", TORCH_INDEX])
 run([sys.executable, "-m", "pip", "install", "-q", "--no-deps", f"monai=={MONAI_VERSION}"])
 run([sys.executable, "-m", "pip", "install", "-q", "nibabel>=5.1", "SimpleITK>=2.3", "einops>=0.7",
      "pydicom>=2.4", "rt-utils>=1.2"])
@@ -69,6 +80,8 @@ print(f"   monai={monai.__version__} | torch={torch.__version__} | GPU : "
       + ", ".join(torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())))
 if monai.__version__ != MONAI_VERSION:
     raise RuntimeError(f"MONAI {monai.__version__} != {MONAI_VERSION}")
+if not torch.__version__.startswith(TORCH_VERSION):
+    raise RuntimeError(f"torch {torch.__version__} != {TORCH_VERSION}")
 if not torch.cuda.is_available():
     raise RuntimeError("Pas de GPU : choisir l'accelerateur GPU T4 x2.")
 if len(JOBS) > torch.cuda.device_count():
@@ -112,6 +125,21 @@ def gpu_monitor(stop, path):
             stop.wait(30)
 
 
+# Reprise : copie de last.pt / best.pt / history.npz / run_meta.json de la session precedente
+if RESUME == "auto":
+    import shutil
+    for job in JOBS:
+        name = f"{job['tag']}_fold{job['fold']}"
+        found = sorted(Path("/kaggle/input").rglob(f"{name}/last.pt"))
+        if not found:
+            raise RuntimeError(f"RESUME='auto' : {name}/last.pt introuvable sous /kaggle/input")
+        dst = RUNS_DIR / name
+        dst.mkdir(parents=True, exist_ok=True)
+        for fn in ("last.pt", "best.pt", "history.npz", "run_meta.json"):
+            if (found[0].parent / fn).exists():
+                shutil.copy2(found[0].parent / fn, dst / fn)
+        print(f"   reprise {name} depuis {found[0].parent}")
+
 stop = threading.Event()
 GPU_CSV = RUNS_DIR / ("gpu_mem_" + "+".join(f"{j['tag']}_f{j['fold']}" for j in JOBS) + ".csv")
 threading.Thread(target=gpu_monitor, args=(stop, GPU_CSV), daemon=True).start()
@@ -148,11 +176,28 @@ for gpu, job in enumerate(JOBS):
     t.start()
     procs.append((job, p, t))
 
-codes = []
+codes, interrupted = [], False
+deadline = T0 + MAX_TRAIN_HOURS * 3600
 for job, p, t in procs:
-    codes.append(p.wait())
+    try:
+        codes.append(p.wait(timeout=max(1.0, deadline - time.time())))
+    except subprocess.TimeoutExpired:   # arret propre : last.pt de la derniere epoque terminee est conserve
+        print(f"\n[!] {MAX_TRAIN_HOURS} h atteintes : arret de {job['tag']} pli {job['fold']} (reprise necessaire)",
+              flush=True)
+        p.terminate()
+        try:
+            p.wait(timeout=120)
+        except subprocess.TimeoutExpired:
+            p.kill()
+        codes.append(0)
+        interrupted = True
     t.join()
 stop.set()
+A_REPRENDRE = RUNS_DIR / "A_REPRENDRE"
+if interrupted:
+    A_REPRENDRE.write_text("entrainement interrompu avant la fin : relancer avec RESUME='auto'\n")
+elif A_REPRENDRE.exists():
+    A_REPRENDRE.unlink()
 print("=" * 60)
 for (job, _, _), code in zip(procs, codes):
     rdir = RUNS_DIR / f"{job['tag']}_fold{job['fold']}"
