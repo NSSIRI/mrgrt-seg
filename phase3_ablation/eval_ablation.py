@@ -54,6 +54,11 @@ if os.environ.get("P2_MAX_PATIENTS"):
 
 ORGANS = ["poumon_g", "poumon_d", "coeur", "oesophage"]    # classes 1..4
 NUM_CLASSES = 5
+# Phase 4 (6 OAR) : P3_ORGANS="poumon_g,poumon_d,coeur,oesophage,moelle,aorte" ; defaut = 4 OAR (phases 2-3)
+if os.environ.get("P3_ORGANS"):
+    ORGANS = os.environ["P3_ORGANS"].split(",")
+    NUM_CLASSES = len(ORGANS) + 1
+N_EXPECTED = int(os.environ.get("P3_N_PATIENTS", "187"))
 VARIANT_FEATURES = {
     "unet_base": [32, 64, 128, 256, 512],     # configs/default.yaml
     "unet_opt": [48, 96, 192, 384, 832],      # configs/unet_fair.yaml
@@ -190,8 +195,8 @@ items = list_patients(str(DATA), IMG_FN, LBL_FN)
 folds = make_5fold_splits(items, n_folds=5, seed=42)
 sizes = [len(f["val"]) for f in folds]
 print(f"\n[4] Dataset : {DATA} ({len(items)} patients, {IMG_FN}/{LBL_FN}) ; plis val = {sizes}", flush=True)
-if len(items) != 187:
-    log_error(f"{len(items)} patients au lieu de 187 : les plis ne correspondront PAS aux CSV existants")
+if len(items) != N_EXPECTED:
+    log_error(f"{len(items)} patients au lieu de {N_EXPECTED} : les plis ne correspondront PAS aux CSV existants")
 (OUT / "splits.json").write_text(json.dumps(folds, indent=1), encoding="utf-8")
 
 

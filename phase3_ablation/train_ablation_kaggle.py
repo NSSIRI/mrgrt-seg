@@ -38,6 +38,8 @@ EPOCHS = 150
 MAX_TRAIN_HOURS = 10.5
 # Reprise : None, ou "auto" = chercher <tag>_fold<k>/last.pt sous /kaggle/input (sortie de la session precedente)
 RESUME = None
+# Phase 4 : dossier monte du dataset de labels 6 OAR (None = phases 2-3, labels 4 OAR du dataset D187)
+LABELS_6OAR = None
 # Liste de jobs : 1 job = protocole standard ; 2 jobs = essai en parallele (1 par GPU, num_workers=2 chacun)
 JOBS = [
     {"model": "unet", "config": "configs/ablation/unet_res.yaml", "fold": 0, "seed": 42, "tag": "unet_res_s42"},
@@ -102,6 +104,34 @@ n_patients = sum(1 for _ in Path(KAGGLE_INPUT_DATASET).glob("PATIENT_s*"))
 print(f"   {n_patients} patients")
 if n_patients != 187:
     raise RuntimeError(f"{n_patients} patients au lieu de 187 : les plis ne correspondraient pas")
+
+# Phase 4 : data6/PATIENT_sXXXX/{image.nii -> dataset D187, label.nii.gz -> dataset de labels 6 OAR}
+if LABELS_6OAR:
+    import nibabel as nib
+    import numpy as np
+    root6 = Path(LABELS_6OAR)
+    if not root6.exists():   # chemin de montage different : on cherche le dossier du dataset par son nom
+        cands = [p for p in Path("/kaggle/input").rglob(root6.name) if p.is_dir()]
+        if not cands:
+            raise RuntimeError(f"dataset de labels 6 OAR non monte : {LABELS_6OAR}")
+        root6 = cands[0]
+    # fichiers a plat dans le dataset : PATIENT_sXXXX_label.nii.gz
+    src_lab = sorted(root6.rglob("PATIENT_s*_label.nii.gz"))
+    if not src_lab:
+        raise RuntimeError(f"aucun label 6 OAR sous {root6}")
+    data6 = REPO_DIR / "data6"
+    data6.mkdir(exist_ok=True)
+    for lab in src_lab:
+        pid = lab.name.replace("_label.nii.gz", "")
+        img = Path(KAGGLE_INPUT_DATASET) / pid / "image.nii"
+        hi, hl = nib.load(str(img)), nib.load(str(lab))
+        if hi.shape[:3] != hl.shape[:3] or not np.allclose(hi.affine, hl.affine, atol=1e-3):
+            raise RuntimeError(f"{pid} : grille du label 6 OAR differente de l'image")
+        (data6 / pid).mkdir(exist_ok=True)
+        for name, target in (("image.nii", img), ("label.nii.gz", lab)):
+            if not (data6 / pid / name).exists():
+                (data6 / pid / name).symlink_to(target)
+    print(f"   data6 : {len(src_lab)} patients (labels 6 OAR, grilles verifiees)")
 
 
 # 4) Memoire GPU (nvidia-smi toutes les 30 s)

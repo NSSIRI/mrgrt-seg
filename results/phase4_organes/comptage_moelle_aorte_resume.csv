@@ -1,0 +1,4 @@
+sous_ensemble,n,moelle_presente,aorte_presente,moelle_couv>=0.95,aorte_couv75bas>=0.95,les_deux>=0.90,les_deux>=0.95
+616 examens,616,420 (68 %),274 (44 %),200 (32 %),165 (27 %),140 (23 %),135 (22 %)
+cohorte D187,187,182 (97 %),181 (97 %),141 (75 %),143 (76 %),119 (64 %),115 (61 %)
+examens avec poumons G et D,249,235 (94 %),219 (88 %),185 (74 %),162 (65 %),137 (55 %),132 (53 %)
