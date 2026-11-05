@@ -42,7 +42,7 @@ HORS_PLAN = {"abdelhalimnssiri": [("2026-11-04 20:32", 4.5)],   # A3 pli 2 v1, i
              "nssiri02": [("2026-11-04 15:40", 0.3)],           # smoke run
              "nasri022026": [("2026-11-04 20:40", 0.1)]}        # 2 echecs (pas d'Internet)
 # comptes desactives (ex. sessions sans Internet : compte non verifie par telephone) ; retirer le nom une fois corrige
-DISABLED = {"pokie02"}
+DISABLED = set()   # pokie02 reactive le 05/11 apres verification par telephone
 POLL = 300
 PHASE4_COMMIT = "65a63af"  # commit pousse contenant configs/phase4
 ACTIFS = {"pousse", "running", "queued"}
