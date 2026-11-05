@@ -52,6 +52,7 @@ VARIANTS = {   # variante -> (modele, config, heures estimees par run : entraine
     "unet_gn": ("unet", "configs/ablation/unet_gn.yaml", 3.14 + 0.15),         # suppose = E3
     "segresnet_in": ("segresnet", "configs/ablation/segresnet_in.yaml", 6.59 + 0.20),  # suppose = E2
 }
+FORCED_ACCOUNT = {"segresnet_in-s42-f2": "nasri022026"}   # v1 interrompue sur abdelhalimnssiri (quota presque epuise)
 SPLIT_VARIANTS = {"unet_res"}   # entrainement en 2 sessions (reprise depuis last.pt)
 FIELDS = ["job", "bloc", "variante", "modele", "config", "graine", "pli", "epoques", "compte", "kernel_id",
           "heures_estimees", "semaine", "statut", "date_push", "date_fin", "remarque"]
@@ -137,6 +138,12 @@ def load_plan() -> list[dict]:
             if o and o["statut"] != "a_lancer":
                 for k in ("compte", "kernel_id", "statut", "date_push", "date_fin", "semaine"):
                     j[k] = o[k]
+    # comptes imposes (ex. job relance sur un compte qui a encore du quota)
+    for j in fresh:
+        if j["statut"] == "a_lancer" and j["job"] in FORCED_ACCOUNT:
+            j["compte"] = FORCED_ACCOUNT[j["job"]]
+            j["kernel_id"] = f"{j['compte']}/abl18m-{slug(j['job'])}"
+            j["date_push"] = ""
     # une partie 2 suit toujours le compte REEL de sa partie 1 (notebook source prive du meme compte)
     by_id = {j["job"]: j for j in fresh}
     for j in fresh:

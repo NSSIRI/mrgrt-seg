@@ -37,6 +37,10 @@ l6 = load("l6", ROOT / "phase4_6oar/launch_6oar.py")
 
 MAX_PAR_COMPTE = 2
 QUOTA_7J = 30.0            # h GPU par compte sur 7 jours glissants (a verifier sur la page des comptes)
+# heures consommees hors plan (runs interrompus, essais) : (date, heures) par compte, comptees sur 7 jours glissants
+HORS_PLAN = {"abdelhalimnssiri": [("2026-11-04 20:32", 4.5)],   # A3 pli 2 v1, interrompue a l'epoque 111
+             "nssiri02": [("2026-11-04 15:40", 0.3)],           # smoke run
+             "nasri022026": [("2026-11-04 20:40", 0.1)]}        # 2 echecs (pas d'Internet)
 POLL = 300
 PHASE4_COMMIT = "65a63af"  # commit pousse contenant configs/phase4
 ACTIFS = {"pousse", "running", "queued"}
@@ -62,7 +66,7 @@ def fetch(j):
 
 def hours_7d(jobs, account):
     lim = now() - dt.timedelta(days=7)
-    h = 0.0
+    h = sum(x for d, x in HORS_PLAN.get(account, []) if dt.datetime.strptime(d, "%Y-%m-%d %H:%M") >= lim)
     for j in jobs:
         if j["compte"] != account or not j.get("date_push"):
             continue
