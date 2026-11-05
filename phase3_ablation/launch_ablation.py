@@ -45,6 +45,7 @@ ACCOUNTS = {   # compte -> fichier token (chemin seulement ; le contenu n'est ja
     "kozani": Path.home() / ".kaggle" / "access_token_compte4",        # compte d'un collegue (accord, 05/11/2026)
     "kozani1": Path.home() / ".kaggle" / "access_token_compte5",       # compte d'un collegue (accord, 05/11/2026)
     "kakachi11": Path.home() / ".kaggle" / "access_token_compte6",     # compte d'un collegue (accord, 05/11/2026)
+    "pokie02": Path.home() / ".kaggle" / "access_token_compte7",       # compte d'un collegue (accord, 05/11/2026)
 }
 QUOTA_H = 30.0     # heures GPU / semaine / compte (a verifier sur la page du compte)
 
