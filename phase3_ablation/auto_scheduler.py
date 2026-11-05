@@ -51,7 +51,17 @@ def now():
     return dt.datetime.now()
 
 
+def account_ok(acc, _cache={}):
+    if acc not in _cache:
+        code, out = la.kaggle(acc, "config", "view")
+        m = re.search(r"username:\s*(\S+)", out)
+        _cache[acc] = bool(m and m.group(1) == acc and "ACCESS_TOKEN" in out)
+    return _cache[acc]
+
+
 def status_of(j):
+    if not account_ok(j["compte"]):
+        return "auth_ko"
     code, out = la.kaggle(j["compte"], "kernels", "status", j["kernel_id"])
     m = re.search(r'status "?(?:KernelWorkerStatus\.)?(\w+)', out)
     return m.group(1).lower() if m else "inconnu"
@@ -122,6 +132,9 @@ def one_pass(dry):
 
     order = {"B": 1, "A": 2, "6OAR": 3}
     for acc in la.ACCOUNTS:
+        if not account_ok(acc):
+            events.append(f"AUTH {acc} : token invalide, compte saute (jobs en cours non suivis)")
+            continue
         actifs = sum(1 for plan in (ab, p4) for j in plan if j["compte"] == acc and j["statut"] in ACTIFS)
         while actifs < MAX_PAR_COMPTE:
             cands = sorted([j for j in ab + p4 if j["compte"] == acc and eligible(j)],
@@ -141,7 +154,6 @@ def one_pass(dry):
                 events.append(f"(dry-run) LANCERAIT {j['job']} sur {acc}")
                 j["statut"] = "pousse"
             else:
-                la.check_account(acc)
                 d = l6.build(j, PHASE4_COMMIT) if j["bloc"] == "6OAR" else la.build(j)
                 code, out = la.kaggle(acc, "kernels", "push", "-p", str(d))
                 ok = code == 0 and "error" not in out.lower()
