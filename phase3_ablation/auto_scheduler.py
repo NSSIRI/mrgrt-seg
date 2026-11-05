@@ -127,11 +127,12 @@ def one_pass(dry):
                 cands = [j for j in cands if j["bloc"] != "6OAR"]
             if not cands:
                 break
-            j = cands[0]
             used = hours_7d(ab + p4, acc)
-            if used + float(j["heures_estimees"]) > QUOTA_7J:
-                events.append(f"QUOTA {acc} : {used:.1f} h sur 7 jours, {j['job']} attend")
+            fits = [c for c in cands if used + float(c["heures_estimees"]) <= QUOTA_7J]
+            if not fits:   # info seulement : ne compte pas comme un evenement (pas d'arret de l'ordonnanceur)
+                print(f"  quota {acc} : {used:.1f} h sur 7 jours, {cands[0]['job']} attend", flush=True)
                 break
+            j = fits[0]    # le premier job du plan qui tient dans le quota restant
             if dry:
                 events.append(f"(dry-run) LANCERAIT {j['job']} sur {acc}")
                 j["statut"] = "pousse"
