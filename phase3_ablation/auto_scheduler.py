@@ -137,8 +137,9 @@ def one_pass(dry):
             continue
         actifs = sum(1 for plan in (ab, p4) for j in plan if j["compte"] == acc and j["statut"] in ACTIFS)
         while actifs < MAX_PAR_COMPTE:
-            cands = sorted([j for j in ab + p4 if j["compte"] == acc and eligible(j)],
-                           key=lambda j: (order.get(j["bloc"], 9), int(j["pli"]), j["job"]))
+            # jobs prevus pour ce compte d'abord, puis ceux des autres comptes (sauf parties 2 : meme compte que p1)
+            cands = sorted([j for j in ab + p4 if eligible(j) and (j["compte"] == acc or not j["job"].endswith("-p2"))],
+                           key=lambda j: (j["compte"] != acc, order.get(j["bloc"], 9), int(j["pli"]), j["job"]))
             # la phase 4 ne demarre qu'une fois tous les jobs de l'ablation lances
             if any(j["bloc"] in ("A", "B") and eligible(j) for j in ab):
                 cands = [j for j in cands if j["bloc"] != "6OAR"]
@@ -150,6 +151,9 @@ def one_pass(dry):
                 print(f"  quota {acc} : {used:.1f} h sur 7 jours, {cands[0]['job']} attend", flush=True)
                 break
             j = fits[0]    # le premier job du plan qui tient dans le quota restant
+            if j["compte"] != acc:   # reattribution dynamique a un compte qui a de la place et du quota
+                j["compte"] = acc
+                j["kernel_id"] = f"{acc}/abl18m-{la.slug(j['job'])}"
             if dry:
                 events.append(f"(dry-run) LANCERAIT {j['job']} sur {acc}")
                 j["statut"] = "pousse"
