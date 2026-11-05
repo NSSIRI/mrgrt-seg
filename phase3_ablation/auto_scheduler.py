@@ -41,6 +41,8 @@ QUOTA_7J = 30.0            # h GPU par compte sur 7 jours glissants (a verifier 
 HORS_PLAN = {"abdelhalimnssiri": [("2026-11-04 20:32", 4.5)],   # A3 pli 2 v1, interrompue a l'epoque 111
              "nssiri02": [("2026-11-04 15:40", 0.3)],           # smoke run
              "nasri022026": [("2026-11-04 20:40", 0.1)]}        # 2 echecs (pas d'Internet)
+# comptes desactives (ex. sessions sans Internet : compte non verifie par telephone) ; retirer le nom une fois corrige
+DISABLED = {"pokie02"}
 POLL = 300
 PHASE4_COMMIT = "65a63af"  # commit pousse contenant configs/phase4
 ACTIFS = {"pousse", "running", "queued"}
@@ -132,6 +134,8 @@ def one_pass(dry):
 
     order = {"B": 1, "A": 2, "6OAR": 3}
     for acc in la.ACCOUNTS:
+        if acc in DISABLED:
+            continue
         if not account_ok(acc):
             events.append(f"AUTH {acc} : token invalide, compte saute (jobs en cours non suivis)")
             continue

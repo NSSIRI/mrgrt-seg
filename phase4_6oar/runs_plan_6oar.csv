@@ -1,8 +1,8 @@
 job,bloc,variante,modele,config,graine,pli,epoques,compte,kernel_id,heures_estimees,semaine,statut,date_push,date_fin,remarque
-seg6-s42-f0,6OAR,seg6,segresnet,configs/phase4/segresnet_6oar.yaml,42,0,150,abdelhalimnssiri,abdelhalimnssiri/abl18m-seg6-s42-f0,4.45,apres ablation,a_lancer,,,estimation proportionnelle au nombre de patients : a confirmer
+seg6-s42-f0,6OAR,seg6,segresnet,configs/phase4/segresnet_6oar.yaml,42,0,150,pokie02,pokie02/abl18m-seg6-s42-f0,4.45,apres ablation,a_lancer,,,estimation proportionnelle au nombre de patients : a confirmer
 unet6-s42-f0,6OAR,unet6,unet,configs/phase4/unet_6oar.yaml,42,0,150,kakachi11,kakachi11/abl18m-unet6-s42-f0,2.33,apres ablation,a_lancer,,,estimation proportionnelle au nombre de patients : a confirmer
 seg6-s42-f1,6OAR,seg6,segresnet,configs/phase4/segresnet_6oar.yaml,42,1,150,nssiri02,nssiri02/abl18m-seg6-s42-f1,4.45,apres ablation,a_lancer,,,estimation proportionnelle au nombre de patients : a confirmer
-unet6-s42-f1,6OAR,unet6,unet,configs/phase4/unet_6oar.yaml,42,1,150,pokie02,pokie02/abl18m-unet6-s42-f1,2.33,apres ablation,pousse,2026-11-05 19:09,,estimation proportionnelle au nombre de patients : a confirmer
+unet6-s42-f1,6OAR,unet6,unet,configs/phase4/unet_6oar.yaml,42,1,150,pokie02,pokie02/abl18m-unet6-s42-f1,2.33,apres ablation,a_lancer,,,estimation proportionnelle au nombre de patients : a confirmer
 seg6-s42-f2,6OAR,seg6,segresnet,configs/phase4/segresnet_6oar.yaml,42,2,150,nasri022026,nasri022026/abl18m-seg6-s42-f2,4.45,apres ablation,a_lancer,,,estimation proportionnelle au nombre de patients : a confirmer
 unet6-s42-f2,6OAR,unet6,unet,configs/phase4/unet_6oar.yaml,42,2,150,kakachi11,kakachi11/abl18m-unet6-s42-f2,2.33,apres ablation,a_lancer,,,estimation proportionnelle au nombre de patients : a confirmer
 seg6-s42-f3,6OAR,seg6,segresnet,configs/phase4/segresnet_6oar.yaml,42,3,150,kozani,kozani/abl18m-seg6-s42-f3,4.45,apres ablation,a_lancer,,,estimation proportionnelle au nombre de patients : a confirmer
