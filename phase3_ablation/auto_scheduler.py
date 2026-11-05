@@ -132,6 +132,21 @@ def one_pass(dry):
             return bool(p1 and p1["statut"] == "complete")
         return True
 
+    # garde-fou phase 4 : un seul job 6 OAR tant qu'aucun n'a fini avec une evaluation valide (6 OAR, sans erreur)
+    def phase4_valid():
+        for j in p4:
+            if j["statut"] != "complete":
+                continue
+            e = la.RESULTS / j["compte"] / j["kernel_id"].split("/", 1)[1] / "ablation_eval"
+            m = e / "metrics_long.csv"
+            if m.exists() and not (e / "errors.log").exists():
+                import pandas as pd
+                if set(pd.read_csv(m).organ) == set(l6.ORGANS6.split(",")):
+                    return True
+        return False
+    p4_ok = phase4_valid()
+    p4_started = any(j["statut"] in ACTIFS or j["statut"] in ("complete", "error") for j in p4)
+
     order = {"B": 1, "A": 2, "6OAR": 3}
     for acc in la.ACCOUNTS:
         if acc in DISABLED:
@@ -146,6 +161,9 @@ def one_pass(dry):
                            key=lambda j: (j["compte"] != acc, order.get(j["bloc"], 9), int(j["pli"]), j["job"]))
             # la phase 4 ne demarre qu'une fois tous les jobs de l'ablation lances
             if any(j["bloc"] in ("A", "B") and eligible(j) for j in ab):
+                cands = [j for j in cands if j["bloc"] != "6OAR"]
+            # tant que le 1er job 6 OAR n'a pas valide la chaine de bout en bout, pas d'autre job 6 OAR
+            if p4_started and not p4_ok:
                 cands = [j for j in cands if j["bloc"] != "6OAR"]
             if not cands:
                 break
