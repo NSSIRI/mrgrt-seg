@@ -1,0 +1,9 @@
+model,organ,n,organe_absent_crop,frac_crop_mediane,pred_vide,metrique_nan
+E2,coeur,187,0,1.0,1,1
+E2,oesophage,187,0,1.0,0,0
+E2,poumon_d,187,0,0.7856,1,1
+E2,poumon_g,187,0,0.7358,0,0
+E3,coeur,187,0,1.0,0,0
+E3,oesophage,187,0,1.0,3,3
+E3,poumon_d,187,0,0.7856,0,0
+E3,poumon_g,187,0,0.7358,0,0

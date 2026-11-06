@@ -1,0 +1,17 @@
+model,organe,metrique,ancien_mediane,ancien_nan,nouveau_niveau,nouveau_mediane,nouveau_nan
+E3,poumon_g,in_organ_ratio,0.0261,23,enc_profond,0.25,0
+E3,poumon_g,pointing_accuracy,0.0,20,enc_profond,0.0,0
+E3,poumon_d,in_organ_ratio,0.0415,19,enc_profond,0.1162,7
+E3,poumon_d,pointing_accuracy,0.0,19,enc_profond,0.0,0
+E3,coeur,in_organ_ratio,0.0251,28,enc_profond,0.2499,18
+E3,coeur,pointing_accuracy,0.0,27,enc_profond,0.0,0
+E3,oesophage,in_organ_ratio,0.001,28,enc_profond,0.0005,3
+E3,oesophage,pointing_accuracy,0.0,23,enc_profond,0.0,0
+E2,poumon_g,in_organ_ratio,0.9318,20,sortie,0.9376,0
+E2,poumon_g,pointing_accuracy,1.0,20,sortie,1.0,0
+E2,poumon_d,in_organ_ratio,0.9406,19,sortie,0.9468,1
+E2,poumon_d,pointing_accuracy,1.0,19,sortie,1.0,0
+E2,coeur,in_organ_ratio,0.867,30,sortie,0.8796,1
+E2,coeur,pointing_accuracy,1.0,27,sortie,1.0,0
+E2,oesophage,in_organ_ratio,0.7602,25,sortie,0.7483,0
+E2,oesophage,pointing_accuracy,1.0,23,sortie,1.0,0
