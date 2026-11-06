@@ -12,7 +12,7 @@
 ## 0. Synthèse
 
 - **Q1, graines : l'écart E2 − E3 est reproductible [O].** Réentraînés avec une autre graine (123), E2 et E3 donnent presque les mêmes résultats.
-  - L'effet de la graine sur le DSC médian apparié reste ≤ 0,008, avec des IC 95 % dans ±0,016.
+  - L'effet de la graine sur le DSC médian apparié reste < 0,01 (au plus 0,0083), avec des IC 95 % dans ±0,016.
   - L'écart E2 − E3 vaut +0,024 à +0,152 avec la graine 42, et +0,024 à +0,146 avec la graine 123.
 - **Q2, connexions résiduelles (A1) : elles comblent environ la moitié de l'écart en DSC [O].** C'est 50 à 62 % selon l'organe, avec des IC entre 40 et 76 %.
   - Elles font presque disparaître les fragments lointains : HDmax médian des poumons de 24 mm contre 152 mm pour E3, 2 composantes connexes au lieu de 9.
@@ -78,7 +78,7 @@ Pour toutes ces comparaisons, p < 1e-20 (Wilcoxon apparié) et r de rang biséri
 
 **Variabilité au niveau des plis (DSC, `stats_q1_variabilite_plis.csv`) [O] :**
 - l'écart-type entre graines des moyennes de pli vaut 0,003 à 0,010 ;
-- il est 3 à 10 fois plus petit que l'écart-type entre plis (0,015 à 0,031), et 5 à 15 fois plus petit que l'écart E2 − E3.
+- il est 1,8 à 9 fois plus petit que l'écart-type entre plis (0,015 à 0,031), et 4 à 18 fois plus petit que l'écart E2 − E3. Le rapport le plus faible concerne l'œsophage de E3 (0,008 contre 0,015).
 
 **Réponse à Q1 :** oui. L'écart E2 − E3 est reproductible d'une graine d'entraînement à l'autre, plis fixés (Figure `abl_fig4`).
 
