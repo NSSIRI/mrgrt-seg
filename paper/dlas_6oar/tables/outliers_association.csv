@@ -1,0 +1,9 @@
+outcome,factor,failed_median,ok_median,test,p,n_failed,n_ok
+fail_major,native slice thickness (mm),2.0,3.0,Mann-Whitney,0.0155,23,92
+fail_major,field = 3.0,5.0,33.0,Fisher exact (counts: with factor failed / ok),0.2258,23,92
+fail_major,seq = GR,10.0,80.0,Fisher exact (counts: with factor failed / ok),0.0,23,92
+fail_major,study = mri heart,2.0,25.0,Fisher exact (counts: with factor failed / ok),0.0963,23,92
+fail_oeso,native slice thickness (mm),3.0,3.0,Mann-Whitney,0.2273,16,99
+fail_oeso,field = 3.0,2.0,36.0,Fisher exact (counts: with factor failed / ok),0.0848,16,99
+fail_oeso,seq = GR,10.0,80.0,Fisher exact (counts: with factor failed / ok),0.1114,16,99
+fail_oeso,study = mri heart,1.0,26.0,Fisher exact (counts: with factor failed / ok),0.1126,16,99

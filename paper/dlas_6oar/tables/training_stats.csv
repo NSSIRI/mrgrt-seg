@@ -1,0 +1,3 @@
+model,best_epoch_median,best_epoch_min,best_epoch_max,best_val_dsc_median,n_params,monai,torch,sec_per_epoch_median,n_epochs_logged,train_hours_median,infer_s_median
+segresnet_6oar,144.0,131,149,0.8383,18796167,1.5.2,2.10.0+cu128,97.1,750,4.0454,4.43
+unet_6oar,133.0,116,145,0.7221,18808159,1.5.2,2.10.0+cu128,47.4,746,1.9547,0.86

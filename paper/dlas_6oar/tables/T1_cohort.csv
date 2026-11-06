@@ -1,0 +1,11 @@
+Characteristic,Value
+Patients (examinations),115
+"Age, years, median [IQR] (available)",62 [53–72.5] (n = 82)
+"Age range, years",17–87
+Sex: male / female / not reported,52 / 30 / 33
+Centres (A / B / C / D),14 / 56 / 41 / 4
+Field strength: 1.5 T / 3 T / not reported,70 / 38 / 7
+Manufacturer: Siemens / GE / Philips / unknown,74 / 28 / 6 / 7
+Sequence: gradient echo / spin echo / other or unknown,90 / 9 / 16
+"Slice thickness, mm, median [range]",3.0 [1.17–8.0] (n = 108)
+Study type (top): abdomen / heart / chest / unknown / other,44 / 27 / 4 / 33 / 7

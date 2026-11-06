@@ -1,0 +1,43 @@
+# References (Vancouver, numbered in order of first citation)
+
+Verified entries: retrieved from PubMed on 06/11/2026 (DOI as returned by PubMed). Entries flagged [TO VERIFY] are non-PubMed sources whose DOI/pages were not confirmed.
+
+1. Raaymakers BW, Jürgenliemk-Schulz IM, Bol GH, et al. First patients treated with a 1.5 T MRI-Linac: clinical proof of concept of a high-precision, high-field MRI guided radiotherapy treatment. Phys Med Biol. 2017;62(23):L41–L50. doi:10.1088/1361-6560/aa9517
+2. Klüter S. Technical design and concept of a 0.35 T MR-Linac. Clin Transl Radiat Oncol. 2019;18:98–101. doi:10.1016/j.ctro.2019.04.007
+3. Winkel D, Bol GH, Kroon PS, et al. Adaptive radiotherapy: the Elekta Unity MR-linac concept. Clin Transl Radiat Oncol. 2019;18:54–59. doi:10.1016/j.ctro.2019.04.001
+4. Corradini S, Alongi F, Andratschke N, et al. MR-guidance in clinical reality: current treatment challenges and future perspectives. Radiat Oncol. 2019;14(1):92. doi:10.1186/s13014-019-1308-y
+5. Bainbridge H, Salem A, Tijssen RHN, et al. Magnetic resonance imaging in precision radiation therapy for lung cancer. Transl Lung Cancer Res. 2017;6(6):689–707. doi:10.21037/tlcr.2017.09.02
+6. van der Pol LHG, Hackett SL, Hoesein FAAM, et al. On the feasibility of cardiac substructure sparing in magnetic resonance imaging guided stereotactic lung radiotherapy. Med Phys. 2022;50(1):397–409. doi:10.1002/mp.16028
+7. Liu M, Yang F, Tang B, et al. Steps towards overcoming challenges in clinical practice at 1.5T MR-Linac for lung cancer adaptive radiotherapy. BMC Cancer. 2025;25(1):1034. doi:10.1186/s12885-025-14428-x
+8. Dewas S, Bibault JE, Blanchard P, et al. Delineation in thoracic oncology: a prospective study of the effect of training on contour variability and dosimetric consequences. Radiat Oncol. 2011;6:118. doi:10.1186/1748-717X-6-118
+9. Vaassen F, Hazelaar C, Canters R, et al. The impact of organ-at-risk contour variations on automatically generated treatment plans for NSCLC. Radiother Oncol. 2021;163:136–142. doi:10.1016/j.radonc.2021.08.014
+10. Yang J, Veeraraghavan H, Armato SG, et al. Autosegmentation for thoracic radiation treatment planning: a grand challenge at AAPM 2017. Med Phys. 2018;45(10):4568–4581. doi:10.1002/mp.13141
+11. Lustberg T, van Soest J, Gooding M, et al. Clinical evaluation of atlas and deep learning based automatic contouring for lung cancer. Radiother Oncol. 2017;126(2):312–317. doi:10.1016/j.radonc.2017.11.012
+12. Chen X, Sun S, Bai N, et al. A deep learning-based auto-segmentation system for organs-at-risk on whole-body computed tomography images for radiation therapy. Radiother Oncol. 2021;160:175–184. doi:10.1016/j.radonc.2021.04.019
+13. Wasserthal J, Breit HC, Meyer MT, et al. TotalSegmentator: robust segmentation of 104 anatomic structures in CT images. Radiol Artif Intell. 2023;5(5):e230024. doi:10.1148/ryai.230024
+14. Emin S, Rossi E, Hedman M, et al. Performance of multi-vendor auto-segmentation models for thoracic organs at risk trained on a single dataset. Phys Med. 2025;137:105089. doi:10.1016/j.ejmp.2025.105089
+15. Vrtovec T, Močnik D, Strojan P, et al. Auto-segmentation of organs at risk for head and neck radiotherapy planning: from atlas-based to deep learning methods. Med Phys. 2020;47(9):e929–e950. doi:10.1002/mp.14320
+16. Erdur AC, Rusche D, Scholz D, et al. Deep learning for autosegmentation for radiotherapy treatment planning: state-of-the-art and novel perspectives. Strahlenther Onkol. 2024;201(3):236–254. doi:10.1007/s00066-024-02262-2
+17. Isensee F, Jaeger PF, Kohl SAA, et al. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nat Methods. 2020;18(2):203–211. doi:10.1038/s41592-020-01008-z
+18. Cardoso MJ, Li W, Brown R, et al. MONAI: an open-source framework for deep learning in healthcare. arXiv. 2022:2211.02701. doi:10.48550/arXiv.2211.02701 [TO VERIFY]
+19. Myronenko A. 3D MRI brain tumor segmentation using autoencoder regularization. In: Brainlesion: Glioma, Multiple Sclerosis, Stroke and Traumatic Brain Injuries (BrainLes 2018). Lect Notes Comput Sci. 2019;11384:311–320. doi:10.1007/978-3-030-11726-9_28 [DOI AND PAGES TO VERIFY]
+20. Ribeiro MF, Marschner S, Kawula M, et al. Deep learning based automatic segmentation of organs-at-risk for 0.35 T MRgRT of lung tumors. Radiat Oncol. 2023;18(1):135. doi:10.1186/s13014-023-02330-4
+21. Delopoulos N, Marschner S, Lombardo E, et al. Implementation and clinical evaluation of an in-house thoracic auto-segmentation model for 0.35 T magnetic resonance imaging guided radiotherapy. Phys Imaging Radiat Oncol. 2025;35:100819. doi:10.1016/j.phro.2025.100819
+22. Xiong Y, Rabe M, Kawula M, et al. Impact of patient-specific deep learning lung organs-at-risk segmentation on accumulated dose in online adaptive 0.35 T MR-guided radiotherapy. Phys Med Biol. 2025;70(22). doi:10.1088/1361-6560/ae16fb
+23. Kawula M, Hadi I, Nierer L, et al. Patient-specific transfer learning for auto-segmentation in adaptive 0.35 T MRgRT of prostate cancer: a bi-centric evaluation. Med Phys. 2022;50(3):1573–1585. doi:10.1002/mp.16056
+24. Kawula M, Marschner S, Wei C, et al. Personalized deep learning auto-segmentation models for adaptive fractionated magnetic resonance-guided radiation therapy of the abdomen. Med Phys. 2024;52(4):2295–2304. doi:10.1002/mp.17580
+25. Kensen CM, Simões R, Betgen A, et al. Incorporating patient-specific information for the development of rectal tumor auto-segmentation models for online adaptive magnetic resonance image-guided radiotherapy. Phys Imaging Radiat Oncol. 2024;32:100648. doi:10.1016/j.phro.2024.100648
+26. Morris ED, Ghanem AI, Dong M, et al. Cardiac substructure segmentation with deep learning for improved cardiac sparing. Med Phys. 2019;47(2):576–586. doi:10.1002/mp.13940
+27. Summerfield N, Morris E, Banerjee S, et al. Enhancing precision in cardiac segmentation for magnetic resonance-guided radiation therapy through deep learning. Int J Radiat Oncol Biol Phys. 2024;120(3):904–914. doi:10.1016/j.ijrobp.2024.05.013
+28. Akinci D'Antonoli T, Berger LK, Indrakanti AK, et al. TotalSegmentator MRI: robust sequence-independent segmentation of multiple anatomic structures in MRI. Radiology. 2025;314(2):e241613. doi:10.1148/radiol.241613
+29. Nikolov S, Blackwell S, Zverovitch A, et al. Clinically applicable segmentation of head and neck anatomy for radiotherapy: deep learning algorithm development and validation study. J Med Internet Res. 2021;23(7):e26151. doi:10.2196/26151
+30. Francis S, Jayaraj PB, Pournami PN, et al. ThoraxNet: a 3D U-Net based two-stage framework for OAR segmentation on thoracic CT images. Phys Eng Sci Med. 2022;45(1):189–203. doi:10.1007/s13246-022-01101-x
+31. Ghaedi E, Asadi A, Hosseini SA, Arabi H. Enhanced pelvic CT segmentation via deep learning: a study on loss function effects. J Imaging Inform Med. 2025;39(1):422–435. doi:10.1007/s10278-025-01550-2
+32. Li K, Samant SS. Patient-specific automated multi-class anatomical motion tracking on real-time cine MR images using deep learning techniques. Med Phys. 2026;53(8):e70622. doi:10.1002/mp.70622
+33. Sherer MV, Lin D, Elguindi S, et al. Metrics to evaluate the performance of auto-segmentation for radiation treatment planning: a critical review. Radiother Oncol. 2021;160:185–191. doi:10.1016/j.radonc.2021.05.003
+34. Vaassen F, Hazelaar C, Vaniqui A, et al. Evaluation of measures for assessing time-saving of automatic organ-at-risk segmentation in radiotherapy. Phys Imaging Radiat Oncol. 2019;13:1–6. doi:10.1016/j.phro.2019.12.001
+35. Baroudi H, Brock KK, Cao W, et al. Automated contouring and planning in radiation therapy: what is 'clinically acceptable'? Diagnostics (Basel). 2023;13(4):667. doi:10.3390/diagnostics13040667
+36. Maier-Hein L, Reinke A, Godau P, et al. Metrics reloaded: recommendations for image analysis validation. Nat Methods. 2024;21(2):195–212. doi:10.1038/s41592-023-02151-z
+37. Reinke A, Tizabi MD, Baumgartner M, et al. Understanding metric-related pitfalls in image analysis validation. Nat Methods. 2024;21(2):182–194. doi:10.1038/s41592-023-02150-0
+38. Konrad ML, Brink C, Bertelsen AS, et al. Feasibility and time gain of implementing artificial intelligence-based delineation tools in daily magnetic resonance image-guided adaptive prostate cancer radiotherapy. Phys Imaging Radiat Oncol. 2024;33:100694. doi:10.1016/j.phro.2024.100694
+39. Wei C, Eze C, Klaar R, et al. Deep learning-based contour propagation in magnetic resonance imaging-guided radiotherapy of lung cancer patients. Phys Med Biol. 2025;70(14). doi:10.1088/1361-6560/ade8d0

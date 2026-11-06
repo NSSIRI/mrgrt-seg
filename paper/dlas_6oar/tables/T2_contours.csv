@@ -1,0 +1,7 @@
+OAR,Fold 0 (validation),Fold 1 (validation),Fold 2 (validation),Fold 3 (validation),Fold 4 (validation),Total,"Reference volume, mL, median [IQR]"
+Left lung,23,23,23,23,23,115,633.4 [380.9–1083.0]
+Right lung,23,23,23,23,23,115,749.8 [471.4–1415.3]
+Heart,23,23,23,23,23,115,399.6 [217.3–555.9]
+Oesophagus,23,23,23,23,23,115,12.8 [7.1–17.9]
+Spinal cord,23,23,23,23,23,115,48.2 [38.3–58.6]
+Aorta,23,23,23,23,23,115,73.4 [49.7–106.0]
