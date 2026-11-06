@@ -260,11 +260,11 @@ At matched capacity, SegResNet segments thoracic OAR on MRI better than a plain 
 9. Isensee F, et al. nnU-Net revisited: a call for rigorous validation in 3D medical image segmentation. MICCAI 2024. [to verify]
 10. Maier-Hein L, et al. Metrics reloaded: recommendations for image analysis validation. *Nat Methods*. 2024. [to verify]
 
-## Figures (existing files)
-- Fig. 1 — Box plots of DSC/HD95, E1–E3: `results/analyse_complete/figures/fig03_boxplots_par_organe`.
-- Fig. 2 — Paired differences vs E3 with seed-variability band: `phase3_ablation/figures/abl_fig1_differences_vs_E3`.
-- Fig. 3 — Share of the gap closed: `phase3_ablation/figures/abl_fig2_part_ecart_comblee`.
-- Fig. 4 — Seed reproducibility: `phase3_ablation/figures/abl_fig4_reproductibilite_graines`.
-- Fig. 5 — Fragmentation and laterality: `phase3_ablation/figures/abl_fig5_robustesse`.
-- Fig. 6 — Six-OAR box plots: `phase4_6oar/figures/p4_fig1_boxplots`.
-- Fig. 7 — Qualitative overlays: `results/analyse_complete/figures/fig07_superpositions_masques`.
+## Figures
+- Fig. 1 — Capacity-matched comparison: DSC and HD95 (log scale) for E1, E3 and E2, 187 patients: `paper/figures_en/fig1_capacity_matched_boxplots`
+- Fig. 2 — Paired differences vs E3 (DSC, HD95) with the training-seed variability band: `paper/figures_en/fig2_paired_differences_vs_E3`
+- Fig. 3 — Share of the E3 → E2 DSC gap closed by each ablation variant: `paper/figures_en/fig3_share_of_gap_closed`
+- Fig. 4 — Reproducibility across training seeds (fold means, seed 42 vs 123): `paper/figures_en/fig4_seed_reproducibility`
+- Fig. 5 — Fragmentation and left/right lung confusion: `paper/figures_en/fig5_fragmentation_laterality`
+- Fig. 6 — Six-OAR model: DSC and HD95, U-Net vs SegResNet, 115 patients: `paper/figures_en/fig6_six_oar_boxplots`
+- Fig. 7 — Qualitative examples (median and worst E3 oesophagus DSC): `paper/figures_en/fig7_qualitative_overlays`
