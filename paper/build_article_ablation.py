@@ -7,6 +7,8 @@ Sources (read-only):
   phase3_ablation/analyse/stats_*.csv, ablation_masks.csv      ablation (A1-A3, seeds)
   results/phase3_ablation/*/abl18m-*/ablation_eval/            per-run metrics (HDmax)
   phase4_6oar/analyse/p4_*.csv                                 6 OAR (D115)
+  phase4_6oar/thorax/stats_thorax.csv, couverture_thorax.csv   6 OAR restricted to the lung slices
+  phase3_ablation/xai_matched/analyse/xai*_stats_apparies.csv  matched-layer Seg-Grad-CAM (D187, D115)
 """
 from pathlib import Path
 
@@ -135,11 +137,59 @@ def table_6oar():
     return "\n".join(lines)
 
 
+def table_6oar_thorax():
+    s = pd.read_csv(ROOT / "phase4_6oar/thorax/stats_thorax.csv")
+    cov = pd.read_csv(ROOT / "phase4_6oar/thorax/couverture_thorax.csv").set_index("organ")
+    lines = ["| OAR | Reference volume within the lung slices, median [Q1] | Region | DSC U-Net | DSC SegResNet | "
+             "Δ DSC (SegResNet − U-Net) | HD95 U-Net (mm) | HD95 SegResNet (mm) | Δ HD95 (mm) |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    for o in ("moelle", "aorte"):
+        for region, lab in (("complet", "full extent"), ("thorax", "lung slices")):
+            d = s[(s.region == region) & (s.organe == o) & (s.metrique == "dsc")].iloc[0]
+            h = s[(s.region == region) & (s.organe == o) & (s.metrique == "hd95_mm")].iloc[0]
+            c = cov.loc[o]
+            first = f"{EN[o]} | {c.frac_gt_thorax_med:.2f} [{c.frac_gt_thorax_q1:.2f}]" if region == "complet" else " | "
+            lines.append(f"| {first} | {lab} | {d['U-Net_med']:.3f} | {d['SegResNet_med']:.3f} | {ci(d)} | "
+                         f"{h['U-Net_med']:.1f} | {h['SegResNet_med']:.1f} | {ci(h, 1)} |")
+    return "\n".join(lines)
+
+
+XLEV = {"enc_profond": "Deepest encoder stage", "dec_demi": "Decoder, 1/2 resolution",
+        "dec_pre_tete": "Last feature map before the output head", "sortie": "Output logits"}
+
+
+def _xai_table(path, organs, a, b):
+    s = pd.read_csv(path)
+    s = s[s.metrique == "in_organ_ratio"]
+    lines = ["| Layer level | " + " | ".join(EN[o] for o in organs) + " |", "|---|" + "---|" * len(organs)]
+    for lv in XLEV:
+        cells = []
+        for o in organs:
+            r = s[(s.niveau == lv) & (s.organe == o)].iloc[0]
+            ns = " ns" if not r.p_holm < 0.05 else ""
+            k = 3 if abs(r.diff_mediane) < 0.005 else 2
+            cells.append(f"{r[a]:.2f} → {r[b]:.2f} ({r.diff_mediane:+.{k}f}{ns})")
+        lines.append(f"| {XLEV[lv]} | " + " | ".join(cells) + " |")
+    return "\n".join(lines)
+
+
+def table_xai4():
+    return _xai_table(ROOT / "phase3_ablation/xai_matched/analyse/xai_stats_apparies.csv", ORG,
+                      "E3_mediane", "E2_mediane")
+
+
+def table_xai6():
+    return _xai_table(ROOT / "phase3_ablation/xai_matched/analyse/xai6_stats_apparies.csv",
+                      ORG + ["moelle", "aorte"], "UNet_mediane", "SegResNet_mediane")
+
+
 def main():
     tpl = (ROOT / "paper/Article_Ablation_6OAR_template.md").read_text(encoding="utf-8")
     out = (tpl.replace("{{TABLE_PHASE2}}", table_phase2()).replace("{{TABLE_PAIRED2}}", table_paired_phase2())
            .replace("{{TABLE_SEEDS}}", table_seeds()).replace("{{TABLE_ABLATION}}", table_ablation())
-           .replace("{{TABLE_ROBUST}}", table_robust()).replace("{{TABLE_6OAR}}", table_6oar()))
+           .replace("{{TABLE_ROBUST}}", table_robust()).replace("{{TABLE_6OAR}}", table_6oar())
+           .replace("{{TABLE_6OAR_THORAX}}", table_6oar_thorax())
+           .replace("{{TABLE_XAI4}}", table_xai4()).replace("{{TABLE_XAI6}}", table_xai6()))
     assert "{{" not in out, "placeholder non remplace"
     (ROOT / "paper/Article_Ablation_6OAR_v1.md").write_text(out, encoding="utf-8")
     print("ecrit paper/Article_Ablation_6OAR_v1.md", len(out.split()), "mots")
