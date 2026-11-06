@@ -42,6 +42,20 @@ JOBS = [
      "sources": ["nssiri02/unet-fold-4-opt"] + [f"nssiri02/segresnet-fold-{k}" for k in range(5)],
      "remarque": "E3 pli 4 + E2 plis 0-4 (37 + 187 patients)"},
 ]
+# Phase 4 (6 OAR, D115) : checkpoints des notebooks abl18m-{seg6,unet6}-s42-f<k>, prives -> job sur le compte proprietaire
+P4_OWNERS = {"pokie02": ["seg6-s42-f0", "seg6-s42-f2", "unet6-s42-f1", "unet6-s42-f3"],
+             "kozani": ["seg6-s42-f1", "seg6-s42-f3"],
+             "kozani1": ["seg6-s42-f4", "unet6-s42-f2"],
+             "kakachi11": ["unet6-s42-f0", "unet6-s42-f4"]}
+LABELS_SLUG = "mrgrt-6oar-labels-d115"   # un dataset prive par compte (phase4_6oar/launch_6oar.py)
+for owner, runs6 in P4_OWNERS.items():
+    JOBS.append({"job": f"xai6-{owner}", "compte": owner, "heures_estimees": 0.4 * len(runs6),
+                 "sources": [f"{owner}/abl18m-{r}" for r in runs6],
+                 "datasets": [DATASET_SLUG, f"{owner}/{LABELS_SLUG}"],
+                 "env": {"XAI_LABELS6": f"/kaggle/input/datasets/{owner}/{LABELS_SLUG}",
+                         "XAI_ORGANS": "poumon_g,poumon_d,coeur,oesophage,moelle,aorte",
+                         "XAI_N_PATIENTS": "115", "XAI_VARIANTS": "unet6,seg6"},
+                 "remarque": "6 OAR : " + ", ".join(runs6)})
 FIELDS = ["job", "compte", "kernel_id", "heures_estimees", "statut", "date_push", "date_fin", "remarque"]
 
 
@@ -68,7 +82,7 @@ def build(job):
     d = BUILD / job["job"]
     d.mkdir(parents=True, exist_ok=True)
     env = {"XAI_INPUT_ROOT": "/kaggle/input", "XAI_OUT": "/kaggle/working/xai_matched",
-           "XAI_REPO_DIR": "/kaggle/working/mrgrt-seg", "XAI_REPO_COMMIT": REPO_COMMIT}
+           "XAI_REPO_DIR": "/kaggle/working/mrgrt-seg", "XAI_REPO_COMMIT": REPO_COMMIT, **job.get("env", {})}
     src = CELL.read_text(encoding="utf-8")
     cell = (TORCH_PIN + "import os\n" + "".join(f"os.environ[{k!r}] = {v!r}\n" for k, v in env.items())
             + f"exec(compile({src!r}, 'xai_matched_kaggle.py', 'exec'))\n")
@@ -81,7 +95,8 @@ def build(job):
     meta = {"id": job["kernel_id"], "title": job["kernel_id"].split("/", 1)[1], "code_file": "notebook.ipynb",
             "language": "python", "kernel_type": "notebook", "is_private": True, "enable_gpu": True,
             "enable_tpu": False, "enable_internet": True, "machine_shape": "NvidiaTeslaT4",
-            "dataset_sources": [DATASET_SLUG], "competition_sources": [], "kernel_sources": job["sources"]}
+            "dataset_sources": job.get("datasets", [DATASET_SLUG]), "competition_sources": [],
+            "kernel_sources": job["sources"]}
     (d / "kernel-metadata.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     return d
 

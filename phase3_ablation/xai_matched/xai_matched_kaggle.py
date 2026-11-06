@@ -50,11 +50,16 @@ ONLY_FOLDS = [int(x) for x in os.environ["XAI_ONLY_FOLDS"].split(",")] if os.env
 RANDOM_INIT = os.environ.get("XAI_RANDOM_INIT", "")        # test local : "unet_opt,segresnet" sans checkpoint
 DO_ADEBAYO = os.environ.get("XAI_ADEBAYO", "1") == "1"
 VARIANTS = os.environ.get("XAI_VARIANTS", "unet_opt,segresnet").split(",")   # E3, E2
-N_EXPECTED = 187
+N_EXPECTED = int(os.environ.get("XAI_N_PATIENTS", "187"))
+# Phase 4 (6 OAR, cohorte D115) : labels 6 OAR + images D187, checkpoints avec run_meta.json
+LABELS6 = os.environ.get("XAI_LABELS6", "")                # dossier (ou dataset monte) des labels 6 OAR ; vide = phase 2
+D187_ROOT = Path(os.environ.get("XAI_D187", "/kaggle/input/datasets/abdelhalimnssiri/mrgrt-oar-thorax-clean-v2"))
 # ==========================================================================
 
 ORGANS = ["poumon_g", "poumon_d", "coeur", "oesophage"]   # classes 1..4
-NUM_CLASSES = 5
+if os.environ.get("XAI_ORGANS"):                           # phase 4 : "...,oesophage,moelle,aorte"
+    ORGANS = os.environ["XAI_ORGANS"].split(",")
+NUM_CLASSES = len(ORGANS) + 1
 LEVELS = ["enc_profond", "dec_demi", "dec_pre_tete", "sortie"]
 LAYERS = {
     "unet": {"enc_profond": "model.1.submodule.1.submodule.1.submodule.1.submodule",
@@ -65,7 +70,7 @@ LAYERS = {
 VARIANT_FEATURES = {"unet_base": [32, 64, 128, 256, 512], "unet_opt": [48, 96, 192, 384, 832]}
 SEGRESNET_KW = {"init_filters": 32, "blocks_down": [1, 2, 2, 4], "blocks_up": [1, 1, 1], "dropout_prob": 0.2}
 EXAMPLE_LEVELS = ["enc_profond", "dec_pre_tete", "sortie"]
-EXAMPLE_ORGANS = [3, 4]                                     # coeur, oesophage
+EXAMPLE_ORGANS = [3, 4] + list(range(5, NUM_CLASSES))      # coeur, oesophage (+ moelle, aorte en phase 4)
 
 OUT.mkdir(parents=True, exist_ok=True)
 (OUT / "examples").mkdir(exist_ok=True)
@@ -141,8 +146,60 @@ def find_dataset(root):
     return best
 
 
-DATA = find_dataset(INPUT_ROOT)
-sample = sorted(p for p in DATA.iterdir() if p.name.startswith("PATIENT_s"))[0]
+def _link(src, dst):
+    try:
+        dst.symlink_to(src)
+    except OSError:          # Windows sans droit de lien symbolique (test local)
+        import shutil
+        shutil.copy2(src, dst)
+
+
+def build_data6(labels_root, d187, dest):
+    """Comme la cellule d'entrainement de phase 4 : data6/PATIENT/{image -> D187, label.nii.gz -> labels 6 OAR}.
+    Accepte les labels a plat (PATIENT_sXXXX_label.nii[.gz], dataset Kaggle) ou par dossier (PATIENT_sXXXX/label.nii.gz,
+    data_6oar/ local). Grilles image/label verifiees."""
+    import gzip
+    import nibabel as nib
+    root6 = Path(labels_root)
+    if not root6.exists():
+        cands = [p for p in INPUT_ROOT.rglob(root6.name) if p.is_dir()]
+        if not cands:
+            raise SystemExit(f"labels 6 OAR non montes : {labels_root}")
+        root6 = cands[0]
+    src = {lab.name.split("_label.nii")[0]: lab for lab in
+           sorted(set(root6.rglob("PATIENT_s*_label.nii.gz")) | set(root6.rglob("PATIENT_s*_label.nii")))}
+    src.update({lab.parent.name: lab for lab in sorted(root6.glob("PATIENT_s*/label.nii.gz"))})
+    if not src:
+        raise SystemExit(f"aucun label 6 OAR sous {root6}")
+    dest.mkdir(parents=True, exist_ok=True)
+    for pid, lab in src.items():
+        img = next((d187 / pid / n for n in ("image.nii", "image.nii.gz") if (d187 / pid / n).exists()), None)
+        if img is None:
+            raise SystemExit(f"{pid} : image absente de {d187}")
+        hi, hl = nib.load(str(img)), nib.load(str(lab))
+        if hi.shape[:3] != hl.shape[:3] or not np.allclose(hi.affine, hl.affine, atol=1e-3):
+            raise SystemExit(f"{pid} : grille du label 6 OAR differente de l'image")
+        (dest / pid).mkdir(exist_ok=True)
+        li = dest / pid / img.name
+        if not li.exists():
+            _link(img.resolve(), li)
+        dst = dest / pid / "label.nii.gz"
+        if not dst.exists():
+            if lab.name.endswith(".gz"):
+                _link(lab.resolve(), dst)
+            else:
+                with open(lab, "rb") as fi, gzip.open(dst, "wb", compresslevel=1) as fo:
+                    fo.write(fi.read())
+    print(f"   data6 : {len(src)} patients ({root6})", flush=True)
+    return dest
+
+
+if LABELS6:
+    DATA = build_data6(LABELS6, find_dataset(D187_ROOT) if D187_ROOT.exists() else find_dataset(INPUT_ROOT),
+                       OUT.parent / "data6")
+else:
+    DATA = find_dataset(INPUT_ROOT)
+sample =sorted(p for p in DATA.iterdir() if p.name.startswith("PATIENT_s"))[0]
 IMG_FN = "image.nii" if (sample / "image.nii").exists() else "image.nii.gz"
 LBL_FN = "label.nii" if (sample / "label.nii").exists() else "label.nii.gz"
 items = list_patients(str(DATA), IMG_FN, LBL_FN)
@@ -150,7 +207,7 @@ folds = make_5fold_splits(items, n_folds=5, seed=42)
 VAL = {f["fold"]: f["val"] for f in folds}
 print(f"\n[4] Dataset : {DATA} ({len(items)} patients) ; plis val = {[len(VAL[k]) for k in sorted(VAL)]}", flush=True)
 if len(items) != N_EXPECTED:
-    log_error(f"{len(items)} patients au lieu de {N_EXPECTED} : plis differents de la phase 2")
+    log_error(f"{len(items)} patients au lieu de {N_EXPECTED} : plis differents des CSV de reference")
 by_pid = {it["patient_id"]: it for it in items}
 val_tf = get_val_transforms(spacing=list(SPACING), intensity_params={"clip_percentiles": [0.5, 99.5]},
                             modality="mri")
@@ -166,7 +223,10 @@ def detect_variant(sd):
     return "unknown"
 
 
-def make_model(variant):
+def make_model(variant, meta=None):
+    if meta:   # phase 4 : reconstruction exacte depuis run_meta.json
+        return build_model(meta["model"], meta["in_channels"], meta["out_channels"], features=meta["features"],
+                           segresnet_kwargs=meta["segresnet_kwargs"], unet_kwargs=meta["unet_kwargs"])
     if variant == "segresnet":
         return build_model("segresnet", 1, NUM_CLASSES, segresnet_kwargs=dict(SEGRESNET_KW))
     return build_model("unet", 1, NUM_CLASSES, features=VARIANT_FEATURES[variant])
@@ -178,14 +238,41 @@ if RANDOM_INIT:
     for v in RANDOM_INIT.split(","):
         for k in (ONLY_FOLDS or [0]):
             runs[(v, k)] = {"variant": v, "fold": k, "path": "<init aleatoire>", "epoch": None, "val_dsc": None}
+            if LABELS6:   # test local phase 4 : architecture lue dans un run_meta.json (poids non telecharges)
+                metas = [json.loads(q.read_text(encoding="utf-8")) for q in CKPT_ROOT.rglob("run_meta.json")]
+                metas = [mt for mt in metas if mt["tag"].split("_s")[0] == v and int(mt["fold"]) == k]
+                if not metas:
+                    raise SystemExit(f"aucun run_meta.json pour {v} pli {k} sous {CKPT_ROOT}")
+                runs[(v, k)]["meta"] = metas[0]
 else:
     seen = set()
     for p in sorted(CKPT_ROOT.rglob("best.pt"), key=lambda q: -q.stat().st_mtime):
         if p.resolve() in seen:
             continue
         seen.add(p.resolve())
+        meta_path = p.parent / "run_meta.json"
+        if LABELS6:   # phase 4 : uniquement des runs avec run_meta.json, pli de validation verifie
+            if not meta_path.exists():
+                continue
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            v, k = meta["tag"].split("_s")[0], int(meta["fold"])
+            if v not in VARIANTS:
+                continue
+            if int(meta.get("split_seed", -1)) != 42 or meta.get("val_patients") != VAL.get(k):
+                log_error(f"{p} : pli de validation de run_meta.json different des plis recalcules -> ignore")
+                continue
+            if meta.get("out_channels") != NUM_CLASSES:
+                log_error(f"{p} : {meta.get('out_channels')} sorties au lieu de {NUM_CLASSES} -> ignore")
+                continue
+            if (v, k) not in runs:
+                ck = torch.load(p, map_location="cpu", weights_only=False)
+                runs[(v, k)] = {"variant": v, "fold": k, "path": str(p), "meta": meta,
+                                "epoch": ck.get("epoch") if isinstance(ck, dict) else None,
+                                "val_dsc": ck.get("val_dsc") if isinstance(ck, dict) else None}
+                del ck
+            continue
         m = re.fullmatch(r"(unet|segresnet)_fold(\d+)", p.parent.name)
-        if not m or (p.parent / "run_meta.json").exists():    # phase 2 uniquement (pas de run_meta.json)
+        if not m or meta_path.exists():    # phase 2 uniquement (pas de run_meta.json)
             continue
         try:
             ck = torch.load(p, map_location="cpu", weights_only=False)
@@ -207,7 +294,7 @@ if ONLY_FOLDS is not None:
 for r in runs.values():
     print(f"   {r['variant']:<10} fold{r['fold']}  epoch={r['epoch']} val_dsc={r['val_dsc']}  {r['path']}", flush=True)
 if not runs:
-    raise SystemExit("Aucun best.pt E2/E3 trouve : ajouter les notebooks d'entrainement en Input.")
+    raise SystemExit("Aucun best.pt trouve : ajouter les notebooks d'entrainement en Input.")
 
 
 # ---------------------------------------------------------------- Seg-Grad-CAM multi-niveaux
@@ -335,7 +422,9 @@ def load_crop(pid):
     lab = d["label"][0].numpy().astype(np.int16)
     pad = [(0, max(0, p - s)) for s, p in zip(img.shape, PATCH)]
     img, lab = np.pad(img, pad), np.pad(lab, pad)
-    fg = np.argwhere(lab > 0)
+    # centre = boite des 4 OAR thoraciques (classes 1-4) : identique a la phase 2 ; en phase 4, la moelle et
+    # l'aorte descendent souvent dans l'abdomen et deplaceraient le recadrage hors du thorax
+    fg = np.argwhere((lab > 0) & (lab <= 4))
     c = (fg.min(0) + fg.max(0)) // 2 if len(fg) else np.array(img.shape) // 2
     st = [int(min(max(ci - p // 2, 0), s - p)) for ci, p, s in zip(c, PATCH, img.shape)]
     sl = tuple(slice(s, s + p) for s, p in zip(st, PATCH))
@@ -407,9 +496,12 @@ info = {"repo_head": REPO_HEAD, "torch": torch.__version__, "monai": monai.__ver
 print(f"\n[6] XAI de {len(runs)} run(s)", flush=True)
 for (variant, fold), run in sorted(runs.items()):
     t_run = time.time()
-    family = "segresnet" if variant == "segresnet" else "unet"
+    meta = run.get("meta")
+    family = meta["model"] if meta else ("segresnet" if variant == "segresnet" else "unet")
     try:
-        model = make_model(variant)
+        model = make_model(variant, meta)
+        if meta and count_parameters(model) != meta.get("n_params"):
+            raise ValueError(f"{count_parameters(model)} parametres != run_meta.json ({meta.get('n_params')})")
         if run["path"] != "<init aleatoire>":
             ck = torch.load(run["path"], map_location="cpu", weights_only=False)
             model.load_state_dict(ck["model_state"] if "model_state" in ck else ck, strict=True)

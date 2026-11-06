@@ -95,3 +95,60 @@ Au niveau enc_profond, E2 est plus focalisé, mais les résolutions diffèrent (
 - Une seule graine d'entraînement.
 - Adebayo sur 1 patient par pli, et pour l'œsophage seulement. La cible de Seg-Grad-CAM est le masque prédit, qui change dès que la sortie est randomisée : cela rend le test en partie facile à réussir (cf. Binder et al.).
 - IRM diagnostiques ; pas de validation externe.
+
+---
+
+# Phase 4 : 6 OAR (cohorte D115), U-Net vs SegResNet
+
+Date : 06/11/2026.
+
+**Données et modèles :**
+- 115 patients, 5 plis de 23 ;
+- checkpoints `abl18m-{unet6,seg6}-s42-f<k>`, reconstruits à partir de `run_meta.json` : 18 808 159 et 18 796 167 paramètres, plis de validation vérifiés.
+
+**Exécution :** 4 jobs Kaggle T4 (5 à 12 min chacun), 115/115 patients par modèle, aucune erreur.
+
+**Scripts :**
+- `xai_matched_kaggle.py`, en mode 6 OAR ;
+- `analyse/analyse_xai6.py`.
+
+**Sorties :**
+- `analyse/xai6_*.csv` ;
+- `analyse/fig_xai6.png`.
+
+**Recadrage :** 128 × 128 × 64, centré sur les **4 OAR thoraciques**, comme en phase 2. On ne centre pas sur les 6 organes : la moelle et l'aorte descendent souvent dans l'abdomen et déplaceraient le champ hors du thorax. La moelle et l'aorte sont donc évaluées sur leur portion comprise dans ce champ thoracique. Part médiane de chaque organe dans le champ :
+
+| Poumon G | Poumon D | Cœur | Œsophage | Moelle | Aorte |
+|---|---|---|---|---|---|
+| 0,71 | 0,77 | 1,00 | 1,00 | 0,82 | 0,93 |
+
+## Résultats observés : in-organ ratio (médiane U-Net → SegResNet)
+
+| Niveau | Poumon G | Poumon D | Cœur | Œsophage | Moelle | Aorte |
+|---|---|---|---|---|---|---|
+| enc_profond | 0,24 → 0,24 (n.s.) | 0,04 → 0,53 | 0,22 → 0,36 | 0,00 → 0,01 | 0,01 → 0,00 | 0,04 → 0,07 |
+| dec_demi | 0,86 → 0,85 (n.s.) | 0,87 → 0,84 | 0,83 → 0,33 | 0,23 → 0,31 | 0,65 → 0,23 | 0,78 → 0,21 |
+| dec_pre_tete | 0,86 → 0,84 (n.s.) | 0,87 → 0,83 | 0,83 → 0,75 | 0,23 → 0,14 | 0,65 → 0,55 | 0,78 → 0,53 |
+| sortie | 0,87 → 0,93 | 0,87 → 0,95 | 0,83 → 0,90 | 0,25 → 0,80 | 0,72 → 0,92 | 0,83 → 0,92 |
+
+Les différences ont p_Holm ≤ 0,011, sauf celles marquées n.s. Le fichier `analyse/xai6_stats_apparies.csv` donne les intervalles de confiance et les autres métriques.
+
+**Test d'Adebayo :** la SSIM médiane après randomisation de la couche de sortie est ≤ 0,03, sauf pour l'U-Net au niveau enc_profond (0,34). La SSIM maximale sur toute la cascade est ≤ 0,34 : le test est réussi, de façon moins nette pour l'U-Net à ce niveau.
+
+## Comparaison avec les 4 OAR (phase 2)
+
+On retrouve le même schéma :
+- **à la sortie**, SegResNet concentre davantage l'attribution dans l'organe, pour les 6 organes ;
+- **dans le décodeur**, c'est l'U-Net, et l'écart est même plus marqué qu'en 4 OAR pour le cœur, la moelle et l'aorte (au niveau dec_demi : −0,36 à −0,46) ;
+- **au niveau le plus profond de l'encodeur**, les valeurs sont faibles pour les deux modèles, et presque nulles pour les petites structures (œsophage, moelle).
+
+## Interprétation possible (non démontrée)
+
+- Le sens de la comparaison U-Net / SegResNet dépend de la couche analysée, en 4 comme en 6 OAR. Aucune conclusion du type « explications plus ancrées anatomiquement » ne tient pour un modèle plutôt que l'autre.
+- SegResNet segmente mieux la moelle et l'aorte dans le thorax (DSC 0,88 et 0,90, contre 0,77 et 0,79 ; `phase4_6oar/thorax/`), alors que l'attribution de son décodeur est moins concentrée sur ces organes. La localisation par Seg-Grad-CAM ne reflète pas la qualité de segmentation.
+
+## Limites propres à la phase 4
+
+- Champ thoracique partiel pour la moelle (0,82 en médiane, Q1 0,60) et pour les poumons.
+- Cohorte D115 incluse dans D187 : ce n'est pas une réplication indépendante.
+- Mêmes limites méthodologiques qu'en 4 OAR : résolutions non strictement appariées, Seg-Grad-CAM seul, une seule graine, test d'Adebayo sur 1 patient par pli.

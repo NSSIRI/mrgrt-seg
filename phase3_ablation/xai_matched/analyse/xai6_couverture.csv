@@ -1,0 +1,13 @@
+model,organ,n,frac_crop_mediane,frac_crop_q1,organe_absent_crop,pred_vide,metrique_nan
+SegResNet,aorte,115,0.9274,0.84805,0,0,0
+SegResNet,coeur,115,1.0,0.99325,0,1,1
+SegResNet,moelle,115,0.824,0.60105,0,0,0
+SegResNet,oesophage,115,1.0,1.0,0,1,1
+SegResNet,poumon_d,115,0.7714,0.683,0,0,0
+SegResNet,poumon_g,115,0.7148,0.6016999999999999,0,0,0
+U-Net,aorte,115,0.9274,0.84805,0,0,0
+U-Net,coeur,115,1.0,0.99325,0,0,0
+U-Net,moelle,115,0.824,0.60105,0,0,0
+U-Net,oesophage,115,1.0,1.0,0,2,2
+U-Net,poumon_d,115,0.7714,0.683,0,0,0
+U-Net,poumon_g,115,0.7148,0.6016999999999999,0,0,0

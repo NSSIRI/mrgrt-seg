@@ -1,0 +1,7 @@
+organ,n_coupes_poumon_med,frac_gt_thorax_med,frac_gt_thorax_min,frac_gt_thorax_q1,pct_patients_gt_hors_thorax
+poumon_g,30.0,1.0,1.0,1.0,0.0
+poumon_d,30.0,1.0,1.0,1.0,0.0
+coeur,30.0,1.0,0.9627,1.0,4.3478
+oesophage,30.0,1.0,0.3777,1.0,13.913
+moelle,30.0,0.3752,0.0689,0.272,98.2609
+aorte,30.0,0.5667,0.0733,0.4115,97.3913
