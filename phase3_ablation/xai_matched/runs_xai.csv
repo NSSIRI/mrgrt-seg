@@ -5,3 +5,7 @@ xai6-pokie02,pokie02,pokie02/abl18m-xai6-pokie02-matched,1.6,complete,2026-11-06
 xai6-kozani,kozani,kozani/abl18m-xai6-kozani-matched,0.8,complete,2026-11-06 16:09,2026-11-06 22:18,"6 OAR : seg6-s42-f1, seg6-s42-f3"
 xai6-kozani1,kozani1,kozani1/abl18m-xai6-kozani1-matched,0.8,complete,2026-11-06 16:09,2026-11-06 22:18,"6 OAR : seg6-s42-f4, unet6-s42-f2"
 xai6-kakachi11,kakachi11,kakachi11/abl18m-xai6-kakachi11-matched,0.8,complete,2026-11-06 16:10,2026-11-06 22:18,"6 OAR : unet6-s42-f0, unet6-s42-f4"
+xai6t-kozani,kozani,kozani/abl18m-xai6t-kozani-matched,0.3,complete,2026-11-07 00:36,2026-11-07 08:26,"cartes thorax : seg6-s42-f1, seg6-s42-f3"
+xai6t-pokie02,pokie02,pokie02/abl18m-xai6t-pokie02-matched,0.3,complete,2026-11-07 00:36,2026-11-07 00:43,"cartes thorax : unet6-s42-f1, unet6-s42-f3"
+xai6t-kozani1,kozani1,kozani1/abl18m-xai6t-kozani1-matched,0.3,complete,2026-11-07 00:36,2026-11-07 00:43,cartes thorax : seg6-s42-f4
+xai6t-kakachi11,kakachi11,kakachi11/abl18m-xai6t-kakachi11-matched,0.3,complete,2026-11-07 00:36,2026-11-07 08:26,cartes thorax : unet6-s42-f4

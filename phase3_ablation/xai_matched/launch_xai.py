@@ -56,6 +56,23 @@ for owner, runs6 in P4_OWNERS.items():
                          "XAI_ORGANS": "poumon_g,poumon_d,coeur,oesophage,moelle,aorte",
                          "XAI_N_PATIENTS": "115", "XAI_VARIANTS": "unet6,seg6"},
                  "remarque": "6 OAR : " + ", ".join(runs6)})
+# Figures thoraciques : cartes des 5 patients a couverture pulmonaire complete (s0547, s0478, s0215, s0202, s0175),
+# uniquement sur les plis qui les valident ; cartes sauvees pour chaque patient, sans Adebayo.
+THORAX_PATIENTS = "PATIENT_s0547,PATIENT_s0478,PATIENT_s0215,PATIENT_s0202,PATIENT_s0175"
+P4_THORAX = {"kozani": (["seg6-s42-f1", "seg6-s42-f3"], "1,3"),
+             "pokie02": (["unet6-s42-f1", "unet6-s42-f3"], "1,3"),
+             "kozani1": (["seg6-s42-f4"], "4"),
+             "kakachi11": (["unet6-s42-f4"], "4")}
+for owner, (runs6, folds) in P4_THORAX.items():
+    JOBS.append({"job": f"xai6t-{owner}", "compte": owner, "heures_estimees": 0.3,
+                 "sources": [f"{owner}/abl18m-{r}" for r in runs6],
+                 "datasets": [DATASET_SLUG, f"{owner}/{LABELS_SLUG}"],
+                 "env": {"XAI_LABELS6": f"/kaggle/input/datasets/{owner}/{LABELS_SLUG}",
+                         "XAI_ORGANS": "poumon_g,poumon_d,coeur,oesophage,moelle,aorte",
+                         "XAI_N_PATIENTS": "115", "XAI_VARIANTS": "unet6,seg6", "XAI_ONLY_FOLDS": folds,
+                         "XAI_PATIENTS": THORAX_PATIENTS, "XAI_EXAMPLE_ALL": "1", "XAI_ADEBAYO": "0",
+                         "XAI_OUT": "/kaggle/working/xai_thorax"},
+                 "remarque": "cartes thorax : " + ", ".join(runs6)})
 FIELDS = ["job", "compte", "kernel_id", "heures_estimees", "statut", "date_push", "date_fin", "remarque"]
 
 

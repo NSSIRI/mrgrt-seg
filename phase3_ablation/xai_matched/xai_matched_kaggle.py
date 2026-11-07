@@ -49,6 +49,9 @@ MAX_PATIENTS = int(os.environ["XAI_MAX_PATIENTS"]) if os.environ.get("XAI_MAX_PA
 ONLY_FOLDS = [int(x) for x in os.environ["XAI_ONLY_FOLDS"].split(",")] if os.environ.get("XAI_ONLY_FOLDS") else None
 RANDOM_INIT = os.environ.get("XAI_RANDOM_INIT", "")        # test local : "unet_opt,segresnet" sans checkpoint
 DO_ADEBAYO = os.environ.get("XAI_ADEBAYO", "1") == "1"
+# sous-ensemble de patients (ex. figures thoraciques) ; vide = tous les patients du pli (comportement d'origine)
+ONLY_PATIENTS = [p for p in os.environ.get("XAI_PATIENTS", "").split(",") if p]
+EXAMPLE_ALL = os.environ.get("XAI_EXAMPLE_ALL", "0") == "1"   # sauver les cartes de CHAQUE patient traite
 VARIANTS = os.environ.get("XAI_VARIANTS", "unet_opt,segresnet").split(",")   # E3, E2
 N_EXPECTED = int(os.environ.get("XAI_N_PATIENTS", "187"))
 # Phase 4 (6 OAR, cohorte D115) : labels 6 OAR + images D187, checkpoints avec run_meta.json
@@ -514,6 +517,12 @@ for (variant, fold), run in sorted(runs.items()):
         log_error(f"{variant} fold{fold} : chargement impossible : {e}\n{traceback.format_exc()}")
         continue
     pids = VAL[fold][:MAX_PATIENTS] if MAX_PATIENTS else VAL[fold]
+    if ONLY_PATIENTS:
+        pids = [p for p in pids if p in ONLY_PATIENTS]
+        if not pids:
+            print(f"   {variant} fold{fold} : aucun patient demande dans ce pli", flush=True)
+            cam.close()
+            continue
     print(f"\n=== {variant} fold{fold} : {len(pids)} patients, {count_parameters(model):,} parametres ===", flush=True)
     shapes_run = None
     for j, pid in enumerate(pids):
@@ -538,7 +547,7 @@ for (variant, fold), run in sorted(runs.items()):
                         base.update(all_metrics(maps[c][lv], g))
                     rows.append(base)
             append(LONG, FIELDS, rows)
-            if j == 0:   # exemples qualitatifs (1er patient du pli, meme patient pour E2 et E3)
+            if j == 0 or EXAMPLE_ALL:   # exemples qualitatifs (1er patient du pli, ou tous si EXAMPLE_ALL)
                 np.savez_compressed(OUT / "examples" / f"{variant}_fold{fold}_{pid}.npz",
                                     image=img.astype(np.float16), label=lab.astype(np.uint8),
                                     **{f"{ORGANS[c - 1]}__{lv}": maps[c][lv].astype(np.float16)
